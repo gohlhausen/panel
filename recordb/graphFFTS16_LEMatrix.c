@@ -1,5 +1,5 @@
 // S16_LE is short datatype
-// 3.011292346 hZ per bin (bin spacing)
+/// 3.011292346 hZ per bin (bin spacing)
 
 #include <stdio.h>
 #include <stdlib.h>
