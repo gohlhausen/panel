@@ -1,0 +1,1 @@
+gcc -o $1 $1.c -lasound -lfftw3 -lm -Ofast

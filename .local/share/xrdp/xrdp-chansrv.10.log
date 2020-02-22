@@ -1,0 +1,7 @@
+[20200212-10:56:16] [CORE ] main: app started pid 14382(0x0000382e)
+[20200212-10:56:16] [INFO ] main: DISPLAY env var set to :10.0
+[20200212-10:56:16] [INFO ] main: using DISPLAY 10
+[20200212-10:56:16] [INFO ] channel_thread_loop: thread start
+[20200212-10:56:16] [INFO ] Socket 12: AF_UNIX connection received
+[20200212-11:01:23] [ERROR] clipboard_event_selection_request: unknown target text/plain;charset=utf-8
+[20200212-11:07:59] [INFO ] channel_thread_loop: trans_check_wait_objs error resetting

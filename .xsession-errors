@@ -1,0 +1,54 @@
+Xsession: X session started for root at Wed Feb 12 10:56:16 CST 2020
+dbus-update-activation-environment: setting DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
+dbus-update-activation-environment: setting DISPLAY=:10.0
+localuser:root being added to access control list
+gpgconf: WARNING: standard input reopened
+gpgconf: WARNING: standard input reopened
+dbus-update-activation-environment: setting USER=root
+dbus-update-activation-environment: setting XDG_SESSION_TYPE=x11
+dbus-update-activation-environment: setting HOME=/root
+dbus-update-activation-environment: setting XRDP_PULSE_SINK_SOCKET=xrdp_chansrv_audio_out_socket_10
+dbus-update-activation-environment: setting XRDP_PULSE_SOURCE_SOCKET=xrdp_chansrv_audio_in_socket_10
+dbus-update-activation-environment: setting DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
+dbus-update-activation-environment: setting PULSE_SCRIPT=/etc/xrdp/pulse/default.pa
+dbus-update-activation-environment: setting IM_CONFIG_PHASE=1
+dbus-update-activation-environment: setting LOGNAME=root
+dbus-update-activation-environment: setting XDG_SESSION_CLASS=user
+dbus-update-activation-environment: setting PATH=/sbin:/bin:/usr/bin:/usr/local/bin:/snap/bin
+dbus-update-activation-environment: setting XRDP_SOCKET_PATH=/var/run/xrdp/sockdir
+dbus-update-activation-environment: setting XDG_RUNTIME_DIR=/run/user/0
+dbus-update-activation-environment: setting DISPLAY=:10.0
+dbus-update-activation-environment: setting LANG=C.UTF-8
+dbus-update-activation-environment: setting UID=0
+dbus-update-activation-environment: setting SHELL=/bin/bash
+dbus-update-activation-environment: setting XRDP_SESSION=1
+dbus-update-activation-environment: setting GPG_AGENT_INFO=/run/user/0/gnupg/S.gpg-agent:0:1
+dbus-update-activation-environment: setting PWD=/root
+dbus-update-activation-environment: setting XDG_DATA_DIRS=/usr/share/mate:/usr/local/share:/usr/share:/var/lib/snapd/desktop
+** Message: 10:56:19.630: couldn't access control socket: /run/user/0/keyring/control: No such file or directory
+SSH_AUTH_SOCK=/run/user/0/keyring/ssh
+x-session-manager[14377]: WARNING: Unable to find provider '' of required component 'dock'
+Window manager warning: Failed to load theme "Ambiant-MATE": Failed to find a valid file for theme Ambiant-MATE
+
+Window manager warning: Failed to load theme "Simple": Failed to find a valid file for theme Simple
+
+Unable to open desktop file /usr/share/applications/firefox.desktop for panel launcher: No such file or directory
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-power.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-power/indicator-power-service” (No such file or directory)
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-datetime.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-datetime/indicator-datetime-service” (No such file or directory)
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-sound.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-sound/indicator-sound-service” (No such file or directory)
+Connection failure: Connection refused
+pa_context_connect() failed: Connection refused
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-session.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-session/indicator-session-service” (No such file or directory)
+SSH_AUTH_SOCK=/run/user/0/keyring/ssh
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-messages.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-messages/indicator-messages-service” (No such file or directory)
+SSH_AUTH_SOCK=/run/user/0/keyring/ssh
+SSH_AUTH_SOCK=/run/user/0/keyring/ssh
+caja-dropbox is not installed, doing nothing.
+x-session-manager[14377]: WARNING: Could not launch application 'indicator-application.desktop': Unable to start application: Failed to execute child process “/usr/lib/aarch64-linux-gnu/indicator-application/indicator-application-service” (No such file or directory)
+
+(nm-applet:14527): Gtk-WARNING **: 10:56:27.299: Can't set a parent on widget which has a parent
+
+(nm-applet:14527): Gdk-CRITICAL **: 10:56:28.448: gdk_window_thaw_toplevel_updates: assertion 'window->update_and_descendants_freeze_count > 0' failed
+Xlib:  extension "DPMS" missing on display ":10.0".
+Gdk-Message: 11:20:18.948: x-session-manager: Fatal IO error 11 (Resource temporarily unavailable) on X server :10.0.
+
