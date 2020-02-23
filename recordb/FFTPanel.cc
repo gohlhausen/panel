@@ -588,7 +588,7 @@ int main (int argc, char *argv[])
   fprintf(stderr, "buffer allocated\n");
 
   for (i = 0; i < buffers; ++i) {
-  buffer[i] = malloc(buffer_frames * snd_pcm_format_width(format) / 8 * 2);
+  buffer[i] = (char*)malloc(buffer_frames * snd_pcm_format_width(format) / 8 * 2);
     if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
       fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
       exit (1);
