@@ -21,6 +21,7 @@ double window[N];
 struct RGBLedMatrixOptions options;
 struct RGBLedMatrix *matrix;
 struct LedCanvas *offscreen_canvas;
+struct LedCanvas *canvas;
 int width, height;
 
 struct Color
@@ -405,27 +406,21 @@ char getMagnitudeChar(double magValue, double maxValue){
 }
 
 void updatePanel(double binsL[], double binsR[]){
-int i,x,y;
-	for (i=1;i<35;i++){
-		printf("%c",getMagnitudeChar(binsL[i],binsL[maxbins+1]));
-	}
-	printf(" - ");
-	for (i=1;i<35;i++){
-		printf("%c",getMagnitudeChar(binsR[i],binsR[maxbins+1]));
-	}
-	printf("\r");
-    for (y = 0; y < height; ++y) {
-      for (x = 0; x < width; ++x) {
-        led_canvas_set_pixel(offscreen_canvas, x, y, 0xff, x, y);
+int x,y;
+	//canvas = led_matrix_get_canvas(matrix);
+	led_canvas_clear(canvas);
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+        led_canvas_set_pixel(canvas, x, y, 0xff, x, y);
       }
-}
+   }
 
     /* Now, we swap the canvas. We give swap_on_vsync the buffer we
      * just have drawn into, and wait until the next vsync happens.
      * we get back the unused buffer to which we'll draw in the next
      * iteration.
      */
-    offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
+   // offscreen_canvas = led_matrix_swap(matrix, offscreen_canvas);
 }
 
 
@@ -493,7 +488,7 @@ int main (int argc, char *argv[])
   unsigned int rate = 48000;
   snd_pcm_t *capture_handle;
   snd_pcm_hw_params_t *hw_params;
-  //snd_pcm_sframes_t avail_cap;
+  snd_pcm_sframes_t avail_cap;
 
   memset(&options, 0, sizeof(options));
   options.hardware_mapping="adafruit-hat-pwm";
@@ -505,6 +500,7 @@ int main (int argc, char *argv[])
   snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
   makeWindow();
   matrix = led_matrix_create_from_options(&options, &argc, &argv);
+  canvas = led_matrix_get_canvas(matrix);
   if (matrix == NULL)
     return 1;
 
@@ -607,9 +603,9 @@ int main (int argc, char *argv[])
     }
   }
   for (i = 0; i < 3200; ++i) {
-    //avail_cap = snd_pcm_avail ( capture_handle  );
+    avail_cap = snd_pcm_avail ( capture_handle  );
     
-    ///fprintf (stderr,"snd_pcm_avail: %ld ", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
+    fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
     //avail_cap=snd_pcm_avail_update( capture_handle);
 
     if ((err = snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames)) != buffer_frames) {
