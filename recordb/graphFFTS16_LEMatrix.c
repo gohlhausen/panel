@@ -405,22 +405,26 @@ char getMagnitudeChar(double magValue, double maxValue){
 	return(magnitudes[(int)(magValue/maxValue*36.0)]);
 }
 
-void updatePanel(double binsL[], double binsR[]){
+void updatePanel(double *binsL, double *binsR){
 int x,y;
-	//canvas = led_matrix_get_canvas(matrix);
-	led_canvas_clear(canvas);
+   //canvas = led_matrix_get_canvas(matrix);
+   //led_canvas_clear(canvas);
+   // for (y = 0; y < height; y=y+16) {
+   //   for (x = 0; x < width; x++) {
+   //     led_canvas_set_pixel(canvas, x, y, 0xff, x, y);
+   //   }
+   //}
+   // offscreen_canvas = led_matrix_swap(matrix, offscreen_canvas);
+}
+
+void updatePanelVSync(double *binsL, double *binsR){
+int x,y;
     for (y = 0; y < height; y++) {
       for (x = 0; x < width; x++) {
-        led_canvas_set_pixel(canvas, x, y, 0xff, x, y);
+        led_canvas_set_pixel(offscreen_canvas, x, y, 0xff, x, y);
       }
    }
-
-    /* Now, we swap the canvas. We give swap_on_vsync the buffer we
-     * just have drawn into, and wait until the next vsync happens.
-     * we get back the unused buffer to which we'll draw in the next
-     * iteration.
-     */
-   // offscreen_canvas = led_matrix_swap(matrix, offscreen_canvas);
+    offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
 }
 
 
@@ -474,7 +478,8 @@ int doFFT(int startbuffer, char *buffer[])
 		}
 	binsL[maxbins+1]=maxL;
 	binsR[maxbins+1]=maxR;
-	updatePanel(binsL,binsR);
+	//updatePanel(binsL,binsR);
+	updatePanelVSync(binsL,binsR);
     return 0;
 }
 int main (int argc, char *argv[])
