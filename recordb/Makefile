@@ -1,8 +1,8 @@
 CFLAGS=-Wall -Ofast -g -Wextra -Wno-unused-parameter
 CXXFLAGS=$(CFLAGS)
-OBJECTS=panelexample.o panelfft.o graphFFTS16_LEMatrix.o
-#BINARIES=panelexample panelfft graphFFTS16_LEMatrix
-BINARIES=graphFFTS16_LEMatrix
+OBJECTS=panelexample.o panelfft.o graphFFTS16_LEMatrix.o FFTPanel.o
+#BINARIES=panelexample panelfft graphFFTS16_LEMatrix 
+BINARIES=graphFFTS16_LEMatrix FFTPanel
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -23,6 +23,7 @@ demo : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
 minimal-example : minimal-example.o
+FFTPanel : FFTPanel.o
 input-example : input-example.o
 text-example: text-example.o
 scrolling-text-example : scrolling-text-example.o
