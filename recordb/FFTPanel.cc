@@ -22,6 +22,14 @@ using rgb_matrix::Canvas;
 #define buffer_frames 1024
 
 double window[N];
+fftw_complex xL[N];
+fftw_complex xR[N];
+fftw_complex yL[N];
+fftw_complex yR[N];
+double mL[N];
+double mR[N];
+fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
+fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
 struct Color
 {
        uint8_t r;
@@ -414,7 +422,7 @@ int x,y;
 
     for (y = 0; y < 64; y++) {
       for (x = 0; x < 256; x++) {
-       //canvas->SetPixel( x, y, 0xff, x, y);
+       canvas->SetPixel( x, y, 0xff, x, y);
       }
    }
 }
@@ -423,12 +431,12 @@ int x,y;
 
 int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 {
-	fftw_complex xL[N];
-	fftw_complex xR[N];
-	fftw_complex yL[N];
-	fftw_complex yR[N];
-	double mL[N];
-	double mR[N];
+	//fftw_complex xL[N];
+	//fftw_complex xR[N];
+	//fftw_complex yL[N];
+	//fftw_complex yR[N];
+	//double mL[N];
+	//double mR[N];
 	double binsL[maxbins+2];
 	double binsR[maxbins+2];
 	short tempL;
@@ -450,8 +458,10 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		xR[i][IMAG] = 0;
 	}
 	// compute the FFT of x and store the results in y
-	fft(xL, yL);
-	fft(xR, yR);
+	//fft(xL, yL);
+	//fft(xR, yR);
+	fftw_execute(Lplan);
+	fftw_execute(Rplan);
 	for (int i = 0; i < N; i++) {
 		mL[i]=yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL];
 		mR[i]=yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL];
@@ -603,6 +613,10 @@ int main (int argc, char *argv[])
       fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
       exit (1);
     }
+	while (snd_pcm_avail_update( capture_handle) > buffer_frames){
+    		snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames);
+
+}
 
     doFFT(i%buffers,buffer,canvas);
     //printf( "\n");
@@ -614,6 +628,9 @@ int main (int argc, char *argv[])
 	
   snd_pcm_close (capture_handle);
   fprintf(stderr, "audio interface closed\n");
+  fftw_destroy_plan(Lplan);
+  fftw_destroy_plan(Rplan);
+  fftw_cleanup();
 
   canvas->Clear();
   delete canvas;
