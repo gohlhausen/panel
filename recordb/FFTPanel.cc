@@ -482,7 +482,7 @@ int main (int argc, char *argv[])
   //short * sampleRP;
   int err;
   char *buffer[buffers];
-  const char* arg="plughw:1,0";
+  const char* arg="hw:CARD=Device,DEV=0";
   unsigned int rate = 48000;
   snd_pcm_t *capture_handle;
   snd_pcm_hw_params_t *hw_params;
