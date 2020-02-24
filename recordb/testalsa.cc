@@ -3,15 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <alsa/asoundlib.h>
 #include <math.h>
 #include <fftw3.h>
-#include <unistd.h>
-#include <signal.h>
-#include "led-matrix.h"
-using rgb_matrix::GPIO;
-using rgb_matrix::RGBMatrix;
-using rgb_matrix::Canvas;
-#include <alsa/asoundlib.h>
 	      
 // macros for the real and imaginary parts
 #define REAL 0
@@ -22,97 +16,13 @@ using rgb_matrix::Canvas;
 #define buffer_frames 1024
 
 double window[N];
-struct Color
-{
-       uint8_t r;
-       uint8_t g;
-       uint8_t b;
-};
 
-volatile bool interrupt_received = false;
-static void InterruptHandler(int signo) {
-  interrupt_received = true;
-}
 void makeWindow(){
 	for(int i=0;i<N;i++){
 	window[i]=0.5-0.5*cos((2.0*M_PI*i)/(N-i));
 	}
 }
 
-struct Color HSVtoColor(double H, double S, double V) {
-	double C = S * V;
-	double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
-	double m = V - C;
-	double Rs, Gs, Bs;
-	struct Color retcolor;
-
-	if(H >= 0 && H < 60) {
-		Rs = C;
-		Gs = X;
-		Bs = 0;	
-	}
-	else if(H >= 60 && H < 120) {	
-		Rs = X;
-		Gs = C;
-		Bs = 0;	
-	}
-	else if(H >= 120 && H < 180) {
-		Rs = 0;
-		Gs = C;
-		Bs = X;	
-	}
-	else if(H >= 180 && H < 240) {
-		Rs = 0;
-		Gs = X;
-		Bs = C;	
-	}
-	else if(H >= 240 && H < 300) {
-		Rs = X;
-		Gs = 0;
-		Bs = C;	
-	}
-	else {
-		Rs = C;
-		Gs = 0;
-		Bs = X;	
-	}
-	
-	retcolor.r = (uint8_t)((Rs + m) * 255);
-	retcolor.g = (uint8_t)((Gs + m) * 255);
-	retcolor.b = (uint8_t)((Bs + m) * 255);
-	return(retcolor);
-}
-
-
-
-struct Color PixelColor(double volL, double volR){
-/*
-Right=240 hue
-Left=0 Hue
-Sat=100 always
-Lum=0 to 50 or 0 to 75
-m1,m2 should be volume related
-  x1 = Math.cos(hue1 / 180 * Math.PI) * saturation1;
-  y1 = Math.sin(hue1 / 180 * Math.PI) * saturation1;
-  z1 = lightness1;
-  x2 = Math.cos(hue2 / 180 * Math.PI) * saturation2;
-  y2 = Math.sin(hue2 / 180 * Math.PI) * saturation2;
-  z2 = lightness2;
-  magmax=m1+m2;
-  mag1=m1/magmax;
-  mag2=m2/magmax;
-  x=(x1*mag1)+(x2*mag2);
-  y=(y1*mag1)+(y2*mag2);
-  z=(z1+z2)/2;
-  h = Math.atan2(y, x) * 180 / Math.PI;
-  s = Math.sqrt(x * x + y * y);
-  l = z;
-*/
-double h=0.0;
-double s=0.0;
-double l=0.0;
-return(HSVtoColor(h,s,l));
-}
 
 /* Computes the 1-D fast Fourier transform. */
 void fft(fftw_complex *in, fftw_complex *out)
@@ -403,25 +313,26 @@ bins[256]=sumbins(yL,7726,8191); //7943);
 }
 char getMagnitudeChar(double magValue, double maxValue){
 	//char* magnitudes="_.,-=~'";
-	const char *magnitudes="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const char* magnitudes="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	//return(magnitudes[(int)(magValue/maxValue*7.0)]);
 	return(magnitudes[(int)(magValue/maxValue*36.0)]);
 }
 
-void updatePanel(double *binsL, double *binsR, Canvas *canvas){
-int x,y;
-  canvas->Fill(0,0,0);
+void updatePanel(double binsL[], double binsR[]){
+int i;
+	for (i=1;i<35;i++){
+		printf("%c",getMagnitudeChar(binsL[i],binsL[maxbins+1]));
+	}
+	printf(" - ");
+	for (i=1;i<35;i++){
+		printf("%c",getMagnitudeChar(binsR[i],binsR[maxbins+1]));
+	}
+	printf("\r");
 
-    for (y = 0; y < 64; y++) {
-      for (x = 0; x < 256; x++) {
-       //canvas->SetPixel( x, y, 0xff, x, y);
-      }
-   }
 }
 
 
-
-int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
+int doFFT(int startbuffer, char *buffer[])
 {
 	fftw_complex xL[N];
 	fftw_complex xR[N];
@@ -471,14 +382,14 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		}
 	binsL[maxbins+1]=maxL;
 	binsR[maxbins+1]=maxR;
-	updatePanel(binsL,binsR,canvas);
+	updatePanel(binsL,binsR);
     return 0;
 }
 int main (int argc, char *argv[])
 {
-  int i; //,buff_i,j;
-  //short * sampleLP;
-  //short * sampleRP;
+  int i,buff_i,j;
+  short * sampleLP;
+  short * sampleRP;
   int err;
   char *buffer[buffers];
   const char *arg="hw:1,0";
@@ -486,15 +397,9 @@ int main (int argc, char *argv[])
   snd_pcm_t *capture_handle;
   snd_pcm_hw_params_t *hw_params;
   snd_pcm_sframes_t avail_cap;
-  RGBMatrix::Options defaults;
-  defaults.hardware_mapping="adafruit-hat-pwm";
-  defaults.rows=64;
-  defaults.cols=256;
-  defaults.chain_length=1;
-  defaults.row_address_type=4;
-  defaults.panel_type="fm6127";  
+  
   snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
-
+  makeWindow();
 
   if ((err = snd_pcm_open (&capture_handle, arg, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
     fprintf (stderr, "cannot open audio device %s (%s)\n", 
@@ -573,16 +478,6 @@ int main (int argc, char *argv[])
 
   fprintf(stderr, "audio interface prepared\n");
 
-  Canvas *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv, &defaults);
-  if (canvas == NULL)
-    return 1;
-
-  // It is always good to set up a signal handler to cleanly exit when we
-  // receive a CTRL-C for instance. The DrawOnCanvas() routine is looking
-  // for that.
-  //signal(SIGTERM, InterruptHandler);
-  //signal(SIGINT, InterruptHandler);
-
 
   fprintf(stderr, "buffer allocated\n");
 
@@ -596,15 +491,15 @@ int main (int argc, char *argv[])
   for (i = 0; i < 3200; ++i) {
     avail_cap = snd_pcm_avail ( capture_handle  );
     
-    fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
-    //avail_cap=snd_pcm_avail_update( capture_handle);
+    //fprintf (stderr,"snd_pcm_avail: %ld ", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
+    avail_cap=snd_pcm_avail_update( capture_handle);
 
     if ((err = snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames)) != buffer_frames) {
       fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
       exit (1);
     }
 
-    doFFT(i%buffers,buffer,canvas);
+    doFFT(i%buffers,buffer);
     //printf( "\n");
   }
 
@@ -615,8 +510,6 @@ int main (int argc, char *argv[])
   snd_pcm_close (capture_handle);
   fprintf(stderr, "audio interface closed\n");
 
-  canvas->Clear();
-  delete canvas;
   exit (0);
 }
 
