@@ -22,7 +22,15 @@ void makeWindow(){
 	window[i]=0.5-0.5*cos((2.0*M_PI*i)/(N-i));
 	}
 }
+fftw_complex xL[N];
+fftw_complex xR[N];
+fftw_complex yL[N];
+fftw_complex yR[N];
+double mL[N];
+double mR[N];
 
+fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_MEASURE);
+fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_MEASURE);
 
 /* Computes the 1-D fast Fourier transform. */
 void fft(fftw_complex *in, fftw_complex *out)
@@ -334,12 +342,12 @@ int i;
 
 int doFFT(int startbuffer, char *buffer[])
 {
-	fftw_complex xL[N];
-	fftw_complex xR[N];
-	fftw_complex yL[N];
-	fftw_complex yR[N];
-	double mL[N];
-	double mR[N];
+	//fftw_complex xL[N];
+	//fftw_complex xR[N];
+	//fftw_complex yL[N];
+	//fftw_complex yR[N];
+	//double mL[N];
+	//double mR[N];
 	double binsL[maxbins+2];
 	double binsR[maxbins+2];
 	short tempL;
@@ -361,8 +369,10 @@ int doFFT(int startbuffer, char *buffer[])
 		xR[i][IMAG] = 0;
 	}
 	// compute the FFT of x and store the results in y
-	fft(xL, yL);
-	fft(xR, yR);
+	fftw_execute(Lplan);
+	fftw_execute(Rplan);
+	//fft(xL, yL);
+	//fft(xR, yR);
 	for (int i = 0; i < N; i++) {
 		mL[i]=yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL];
 		mR[i]=yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL];
@@ -491,8 +501,8 @@ int main (int argc, char *argv[])
   for (i = 0; i < 3200; ++i) {
     avail_cap = snd_pcm_avail ( capture_handle  );
     
-    //fprintf (stderr,"snd_pcm_avail: %ld ", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
-    avail_cap=snd_pcm_avail_update( capture_handle);
+    //fprintf (stderr,"snd_pcm_avail: %ld \r", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
+    //avail_cap=snd_pcm_avail_update( capture_handle);
 
     if ((err = snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames)) != buffer_frames) {
       fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
@@ -509,6 +519,9 @@ int main (int argc, char *argv[])
 	
   snd_pcm_close (capture_handle);
   fprintf(stderr, "audio interface closed\n");
+  fftw_destroy_plan(Lplan);
+  fftw_destroy_plan(Rplan);
+  fftw_cleanup();
 
   exit (0);
 }
