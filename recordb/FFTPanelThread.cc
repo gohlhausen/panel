@@ -1,29 +1,29 @@
 // S16_LE is short datatype
 /// 3.011292346 hZ per bin (bin spacing)
 
+#include "led-matrix.h"
+#include "threaded-canvas-manipulator.h"
+#include "pixel-mapper.h"
+#include "graphics.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <fftw3.h>
 #include <unistd.h>
 #include <signal.h>
-#include "led-matrix.h"
-#include "threaded-canvas-manipulator.h"
-#include "pixel-mapper.h"
-#include "graphics.h"
-using rgb_matrix::GPIO;
-using rgb_matrix::RGBMatrix;
-using rgb_matrix::Canvas;
 #include <assert.h>
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
 
 #include <algorithm>
-
+#include <alsa/asoundlib.h>
+using rgb_matrix::GPIO;
+using rgb_matrix::RGBMatrix;
+using rgb_matrix::Canvas;
 using std::min;
 using std::max;
-#include <alsa/asoundlib.h>
+using namespace rgb_matrix;
 	      
 // macros for the real and imaginary parts
 #define REAL 0
@@ -42,12 +42,7 @@ double mL[N];
 double mR[N];
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
-struct Color
-{
-       uint8_t r;
-       uint8_t g;
-       uint8_t b;
-};
+ThreadedCanvasManipulator *image_gen = NULL;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
@@ -58,6 +53,33 @@ void makeWindow(){
 	window[i]=0.5-0.5*cos((2.0*M_PI*i)/(N-i));
 	}
 }
+class updatePanel : public ThreadedCanvasManipulator {
+public:
+  updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  void Run() {
+    const int sub_blocks = 16;
+    const int width = canvas()->width();
+    const int height = canvas()->height();
+    const int x_step = max(1, width / sub_blocks);
+    const int y_step = max(1, height / sub_blocks);
+    uint8_t count = 0;
+    while (running() && !interrupt_received) {
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          int c = sub_blocks * (y / y_step) + x / x_step;
+          switch (count % 4) {
+          case 0: canvas()->SetPixel(x, y, c, c, c); break;
+          case 1: canvas()->SetPixel(x, y, c, 0, 0); break;
+          case 2: canvas()->SetPixel(x, y, 0, c, 0); break;
+          case 3: canvas()->SetPixel(x, y, 0, 0, c); break;
+          }
+        }
+      }
+      count++;
+      //sleep(2);
+    }
+  }
+};
 
 struct Color HSVtoColor(double H, double S, double V) {
 	double C = S * V;
@@ -428,17 +450,6 @@ char getMagnitudeChar(double magValue, double maxValue){
 	return(magnitudes[(int)(magValue/maxValue*36.0)]);
 }
 
-void updatePanel(double *binsL, double *binsR, Canvas *canvas){
-int x,y;
-  canvas->Fill(0,0,0);
-
-    for (y = 0; y < 64; y++) {
-      for (x = 0; x < 256; x++) {
-       canvas->SetPixel( x, y, 0xff, x, y);
-      }
-   }
-}
-
 
 
 int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
@@ -493,7 +504,7 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		}
 	binsL[maxbins+1]=maxL;
 	binsR[maxbins+1]=maxR;
-	updatePanel(binsL,binsR,canvas);
+	//updatePanel(binsL,binsR,canvas);
     return 0;
 }
 int main (int argc, char *argv[])
@@ -605,6 +616,8 @@ int main (int argc, char *argv[])
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
+  image_gen = new updatePanel(canvas);
+  image_gen->Start();
 
   fprintf(stderr, "buffer allocated\n");
 
@@ -645,6 +658,7 @@ int main (int argc, char *argv[])
   fftw_cleanup();
 
   canvas->Clear();
+  delete image_gen;
   delete canvas;
   exit (0);
 }
