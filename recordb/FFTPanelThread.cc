@@ -40,6 +40,9 @@ fftw_complex yL[N];
 fftw_complex yR[N];
 double mL[N];
 double mR[N];
+double PanelBinsL[64][maxbins+2];
+double PanelBinsR[64][maxbins+2];
+int CurrentPanelBin;
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
 ThreadedCanvasManipulator *image_gen = NULL;
@@ -47,6 +50,18 @@ ThreadedCanvasManipulator *image_gen = NULL;
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
   interrupt_received = true;
+}
+void setupPanelBins(){
+int bin,i;
+	CurrentPanelBin=0;
+	for(i=0;i<64;i++){
+	   for(bin=0;bin<maxbins;bin++){
+		PanelBinsL[i][bin]=bin/maxbins;
+		PanelBinsR[i][bin]=1-(bin/maxbins);
+		}
+       	    PanelBinsL[i][maxbins+1]=1;
+	    PanelBinsR[i][maxbins+1]=1;
+	}
 }
 void makeWindow(){
 	for(int i=0;i<N;i++){
@@ -183,7 +198,9 @@ double retval=0;
 }
 
 void makebins(double bins[], double yL[]){
-
+// bins[0]=average value
+// bins[256+1]=max value across all bins(not 0)
+double maxL=0;
 bins[0]=sumbins(yL,0,0);
 bins[1]=sumbins(yL,1,6);
 bins[2]=sumbins(yL,7,7);
@@ -441,8 +458,13 @@ bins[253]=sumbins(yL,7110,7309);
 bins[254]=sumbins(yL,7310,7514);
 bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
+for (int i = 1; i <= maxbins; i++) {
+	if(bins[i]>maxL){maxL=bins[i];}
+	}
+bins[maxbins+1]=maxL;
 
 }
+
 char getMagnitudeChar(double magValue, double maxValue){
 	//char* magnitudes="_.,-=~'";
 	const char *magnitudes="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -466,8 +488,6 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	short tempR;
 	int bufnum;
 	int cursor;
-	double maxL=0;
-	double maxR=0;
 	for (int i = 0; i < N; i++) {
       		bufnum=(startbuffer+(i/buffer_frames))%buffers;
       		cursor= i%buffer_frames ;
@@ -497,13 +517,6 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	makebins(binsL,mL);
 	makebins(binsR,mR);
 
-
-	for (int i = 1; i <= maxbins; i++) {
-		if(binsL[i]>maxL){maxL=binsL[i];}
-		if(binsR[i]>maxR){maxR=binsR[i];}
-		}
-	binsL[maxbins+1]=maxL;
-	binsR[maxbins+1]=maxR;
 	//updatePanel(binsL,binsR,canvas);
     return 0;
 }
@@ -528,6 +541,7 @@ int main (int argc, char *argv[])
   defaults.panel_type="fm6127";  
   snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
 
+  setupPanelBins();
 
   if ((err = snd_pcm_open (&capture_handle, arg, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
     fprintf (stderr, "cannot open audio device %s (%s)\n", 
@@ -640,6 +654,7 @@ int main (int argc, char *argv[])
     }
 	while (snd_pcm_avail_update( capture_handle) > buffer_frames){
     		snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames);
+    printf( " DROP \n");
 
 }
 
