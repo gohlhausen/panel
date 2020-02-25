@@ -46,6 +46,7 @@ int CurrentPanelBin;
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
 ThreadedCanvasManipulator *image_gen = NULL;
+ThreadedCanvasManipulator *image_gen2 = NULL;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
@@ -79,7 +80,7 @@ public:
     const int y_step = max(1, height / sub_blocks);
     uint8_t count = 0;
     while (running() && !interrupt_received) {
-      for (int y = 0; y < height; ++y) {
+      for (int y = 0; y < height/2; ++y) {
         for (int x = 0; x < width; ++x) {
           int c = sub_blocks * (y / y_step) + x / x_step;
           switch (count % 4) {
@@ -91,7 +92,35 @@ public:
         }
       }
       count++;
-      //sleep(2);
+      //usleep(2000);
+    }
+  }
+};
+
+class updatePanel2 : public ThreadedCanvasManipulator {
+public:
+  updatePanel2(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  void Run() {
+    const int sub_blocks = 16;
+    const int width = canvas()->width();
+    const int height = canvas()->height();
+    const int x_step = max(1, width / sub_blocks);
+    const int y_step = max(1, height / sub_blocks);
+    uint8_t count = 0;
+    while (running() && !interrupt_received) {
+      for (int y = height/2; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          int c = sub_blocks * (y / y_step) + x / x_step;
+          switch (count % 4) {
+          case 0: canvas()->SetPixel(x, y, c, c, c); break;
+          case 1: canvas()->SetPixel(x, y, c, 0, 0); break;
+          case 2: canvas()->SetPixel(x, y, 0, c, 0); break;
+          case 3: canvas()->SetPixel(x, y, 0, 0, c); break;
+          }
+        }
+      }
+      count++;
+      //usleep(2000);
     }
   }
 };
@@ -631,7 +660,9 @@ int main (int argc, char *argv[])
   signal(SIGINT, InterruptHandler);
 
   image_gen = new updatePanel(canvas);
+  image_gen2 = new updatePanel2(canvas);
   image_gen->Start();
+  image_gen2->Start();
 
   fprintf(stderr, "buffer allocated\n");
 
@@ -642,7 +673,7 @@ int main (int argc, char *argv[])
       exit (1);
     }
   }
-  for (i = 0; i < 3200 && !interrupt_received; ++i) {
+  while( !interrupt_received) {
     avail_cap = snd_pcm_avail ( capture_handle  );
     
     fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
@@ -674,6 +705,7 @@ int main (int argc, char *argv[])
 
   canvas->Clear();
   delete image_gen;
+  delete image_gen2;
   delete canvas;
   exit (0);
 }
