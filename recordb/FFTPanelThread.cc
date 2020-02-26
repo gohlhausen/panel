@@ -46,7 +46,6 @@ int CurrentPanelBin;
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
 ThreadedCanvasManipulator *image_gen = NULL;
-ThreadedCanvasManipulator *image_gen2 = NULL;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
@@ -57,11 +56,11 @@ int bin,i;
 	CurrentPanelBin=0;
 	for(i=0;i<64;i++){
 	   for(bin=0;bin<maxbins;bin++){
-		PanelBinsL[i][bin]=bin/maxbins;
-		PanelBinsR[i][bin]=1-(bin/maxbins);
+		PanelBinsL[i][bin]=(double)bin/(double)maxbins;
+		PanelBinsR[i][bin]=1.0-((double)bin/(double)maxbins);
 		}
-       	    PanelBinsL[i][maxbins+1]=1;
-	    PanelBinsR[i][maxbins+1]=1;
+       	    PanelBinsL[i][maxbins+1]=1.0;
+	    PanelBinsR[i][maxbins+1]=1.0;
 	}
 }
 void makeWindow(){
@@ -73,57 +72,18 @@ class updatePanel : public ThreadedCanvasManipulator {
 public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int sub_blocks = 16;
     const int width = canvas()->width();
     const int height = canvas()->height();
-    const int x_step = max(1, width / sub_blocks);
-    const int y_step = max(1, height / sub_blocks);
-    uint8_t count = 0;
     while (running() && !interrupt_received) {
-      for (int y = 0; y < height/2; ++y) {
+      for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-          int c = sub_blocks * (y / y_step) + x / x_step;
-          switch (count % 4) {
-          case 0: canvas()->SetPixel(x, y, c, c, c); break;
-          case 1: canvas()->SetPixel(x, y, c, 0, 0); break;
-          case 2: canvas()->SetPixel(x, y, 0, c, 0); break;
-          case 3: canvas()->SetPixel(x, y, 0, 0, c); break;
-          }
+          canvas()->SetPixel(x, y, (uint8_t)(PanelBinsL[y][x]*255.0),  (uint8_t)(PanelBinsR[y][x]*255.0),0); 
         }
       }
-      count++;
-      //usleep(2000);
     }
   }
 };
 
-class updatePanel2 : public ThreadedCanvasManipulator {
-public:
-  updatePanel2(Canvas *m) : ThreadedCanvasManipulator(m) {}
-  void Run() {
-    const int sub_blocks = 16;
-    const int width = canvas()->width();
-    const int height = canvas()->height();
-    const int x_step = max(1, width / sub_blocks);
-    const int y_step = max(1, height / sub_blocks);
-    uint8_t count = 0;
-    while (running() && !interrupt_received) {
-      for (int y = height/2; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-          int c = sub_blocks * (y / y_step) + x / x_step;
-          switch (count % 4) {
-          case 0: canvas()->SetPixel(x, y, c, c, c); break;
-          case 1: canvas()->SetPixel(x, y, c, 0, 0); break;
-          case 2: canvas()->SetPixel(x, y, 0, c, 0); break;
-          case 3: canvas()->SetPixel(x, y, 0, 0, c); break;
-          }
-        }
-      }
-      count++;
-      //usleep(2000);
-    }
-  }
-};
 
 struct Color HSVtoColor(double H, double S, double V) {
 	double C = S * V;
@@ -660,9 +620,7 @@ int main (int argc, char *argv[])
   signal(SIGINT, InterruptHandler);
 
   image_gen = new updatePanel(canvas);
-  image_gen2 = new updatePanel2(canvas);
   image_gen->Start();
-  image_gen2->Start();
 
   fprintf(stderr, "buffer allocated\n");
 
@@ -705,7 +663,6 @@ int main (int argc, char *argv[])
 
   canvas->Clear();
   delete image_gen;
-  delete image_gen2;
   delete canvas;
   exit (0);
 }
