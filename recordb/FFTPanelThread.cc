@@ -77,7 +77,7 @@ public:
     while (running() && !interrupt_received) {
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)(PanelBinsL[y][x]*255.0),  (uint8_t)(PanelBinsR[y][x]*255.0),0); 
+          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[y][x]/PanelBinsL[y][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[y][x]/PanelBinsR[y][maxbins+1])*255.0),0); 
         }
       }
     }
@@ -183,13 +183,14 @@ double retval=0;
 	for(int i=startb;i<=endb;i++){
 		retval+=sbins[i];
 		}
+
 	return(retval);
 }
 
 void makebins(double bins[], double yL[]){
 // bins[0]=average value
 // bins[256+1]=max value across all bins(not 0)
-double maxL=0;
+double maxL=-12345678900;
 bins[0]=sumbins(yL,0,0);
 bins[1]=sumbins(yL,1,6);
 bins[2]=sumbins(yL,7,7);
@@ -449,9 +450,10 @@ bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
 	if(bins[i]>maxL){maxL=bins[i];}
+//      	printf( "%f ", bins[i] );
 	}
 bins[maxbins+1]=maxL;
-
+      		printf( "%f\n", yL[0] );
 }
 
 char getMagnitudeChar(double magValue, double maxValue){
@@ -490,10 +492,10 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		xR[i][IMAG] = 0;
 	}
 	// compute the FFT of x and store the results in y
-	//fft(xL, yL);
-	//fft(xR, yR);
-	fftw_execute(Lplan);
-	fftw_execute(Rplan);
+	fft(xL, yL);
+	fft(xR, yR);
+	//fftw_execute(Lplan);
+	//fftw_execute(Rplan);
 	for (int i = 0; i < N; i++) {
 		mL[i]=yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL];
 		mR[i]=yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL];
@@ -503,9 +505,15 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		mR[i]=sqrt(mR[i]);
 		}
 
+      		printf( "%f - ", mL[0] );
 	makebins(binsL,mL);
+      		printf( "%f - ", mR[0] );
 	makebins(binsR,mR);
-
+	CurrentPanelBin=(CurrentPanelBin+1)%64;
+	for (int i=0;i<maxbins+2;i++){
+		PanelBinsL[CurrentPanelBin][i]=binsL[i];
+		PanelBinsR[CurrentPanelBin][i]=binsR[i];
+		}
 	//updatePanel(binsL,binsR,canvas);
     return 0;
 }
