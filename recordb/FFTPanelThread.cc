@@ -42,8 +42,8 @@ fftw_complex yL[N];
 fftw_complex yR[N];
 double mL[N];
 double mR[N];
-double PanelBinsL[64][maxbins+2];
-double PanelBinsR[64][maxbins+2];
+double PanelBinsL[64][maxbins+3];
+double PanelBinsR[64][maxbins+3];
 int CurrentPanelBin;
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -61,8 +61,8 @@ int bin,i;
 		PanelBinsL[i][bin]=(double)bin/(double)maxbins;
 		PanelBinsR[i][bin]=1.0-((double)bin/(double)maxbins);
 		}
-       	    PanelBinsL[i][maxbins+1]=1.0;
-	    PanelBinsR[i][maxbins+1]=1.0;
+       	    PanelBinsL[i][maxbins+2]=1.0;
+	    PanelBinsR[i][maxbins+2]=1.0;
 	}
 }
 void makeWindow(){
@@ -81,7 +81,7 @@ public:
       for (int y = 0; y < height; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x]/PanelBinsL[currow][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[currow][x]/PanelBinsR[currow][maxbins+1])*255.0),(((x+9)%24)==0)?(128):(0)); 
+          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+9)%25)==0)?(128):(0)); 
         }
       }
     }
@@ -196,7 +196,7 @@ void makebins(double bins[], double yL[]){
 // bins[256+1]=max value across all bins(not 0)
 double maxL=-12345678900;
 bins[0]=sumbins(yL,0,0);
-bins[1]=sumbins(yL,1,6);
+bins[1]=sumbins(yL,6,6);
 bins[2]=sumbins(yL,7,7);
 bins[3]=sumbins(yL,7,7);
 bins[4]=sumbins(yL,7,7);
@@ -456,7 +456,7 @@ for (int i = 1; i <= maxbins; i++) {
 	if(bins[i]>maxL){maxL=bins[i];}
 //      	//printf( "%f ", bins[i] );
 	}
-bins[maxbins+1]=maxL;
+bins[maxbins+2]=maxL;
       		//printf( "%f\n", yL[0] );
 }
 
@@ -477,8 +477,8 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	//fftw_complex yR[N];
 	//double mL[N];
 	//double mR[N];
-	double binsL[maxbins+2];
-	double binsR[maxbins+2];
+	double binsL[maxbins+3];
+	double binsR[maxbins+3];
 	short tempL;
 	short tempR;
 	int bufnum;
@@ -516,7 +516,7 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
       		//printf( "%f - ", mR[0] );
 	makebins(binsR,mR);
 	CurrentPanelBin=(CurrentPanelBin+1)%64;
-	for (int i=0;i<maxbins+2;i++){
+	for (int i=0;i<maxbins+3;i++){
 		PanelBinsL[CurrentPanelBin][i]=binsL[i];
 		PanelBinsR[CurrentPanelBin][i]=binsR[i];
 		}
