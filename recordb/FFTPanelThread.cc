@@ -81,7 +81,7 @@ public:
       for (int y = 0; y < height; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+9)%25)==0)?(128):(0)); 
+          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+7)%25)==0)?(128):(0)); 
         }
       }
     }
@@ -453,10 +453,11 @@ bins[254]=sumbins(yL,7310,7514);
 bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
-	if(bins[i]>maxL){maxL=bins[i];}
-//      	//printf( "%f ", bins[i] );
+	if(bins[i]>maxL){maxL=bins[i];
+//      	printf( "%d %f ", i,bins[i] );
+}
 	}
-bins[maxbins+2]=maxL;
+bins[maxbins+2]=max(maxL,75.0);
       		//printf( "%f\n", yL[0] );
 }
 
