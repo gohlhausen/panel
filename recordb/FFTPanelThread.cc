@@ -81,7 +81,7 @@ public:
       for (int y = 0; y < height; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x]/PanelBinsL[currow][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[currow][x]/PanelBinsR[currow][maxbins+1])*255.0),((x%16)==0)?(128):(0)); 
+          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x]/PanelBinsL[currow][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[currow][x]/PanelBinsR[currow][maxbins+1])*255.0),(((x+9)%24)==0)?(128):(0)); 
         }
       }
     }
