@@ -31,7 +31,9 @@ using namespace rgb_matrix;
 #define N 16384
 #define maxbins 256
 #define buffers 16
-#define buffer_frames 1024
+#define buffer_frames 2048
+//1024
+
 
 double window[N];
 fftw_complex xL[N];
@@ -72,12 +74,14 @@ class updatePanel : public ThreadedCanvasManipulator {
 public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
+	int currow;
     const int width = canvas()->width();
     const int height = canvas()->height();
     while (running() && !interrupt_received) {
       for (int y = 0; y < height; ++y) {
+	currow=(64+(CurrentPanelBin-y))%64;
         for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[y][x]/PanelBinsL[y][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[y][x]/PanelBinsR[y][maxbins+1])*255.0),0); 
+          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x]/PanelBinsL[currow][maxbins+1])*255.0),  (uint8_t)((PanelBinsR[currow][x]/PanelBinsR[currow][maxbins+1])*255.0),((x%16)==0)?(128):(0)); 
         }
       }
     }
@@ -450,10 +454,10 @@ bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
 	if(bins[i]>maxL){maxL=bins[i];}
-//      	printf( "%f ", bins[i] );
+//      	//printf( "%f ", bins[i] );
 	}
 bins[maxbins+1]=maxL;
-      		printf( "%f\n", yL[0] );
+      		//printf( "%f\n", yL[0] );
 }
 
 char getMagnitudeChar(double magValue, double maxValue){
@@ -485,17 +489,18 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
       		//printf( "f(%d,%d,0,0)\n",  bufnum,cursor );
 		tempL = (short)((unsigned int)buffer[bufnum][cursor*4]| (unsigned int)buffer[bufnum][cursor*4+1]<<8);
 		tempR = (short)((unsigned int)buffer[bufnum][cursor*4+2]| (unsigned int)buffer[bufnum][cursor*4+3]<<8);
-      		//printf( "f(%d,%d,%f,%f)\n",  bufnum,cursor,*tempL,*tempR );
-		xL[i][REAL] = window[i]*(double)tempL/32768;
-		xR[i][REAL] = window[i]*(double)tempR/32768;
+      		//printf( "f(%d,%d) ",  tempL,tempR );
+		xL[i][REAL] = window[i]*(double)tempL/32768.0;
+		xR[i][REAL] = window[i]*(double)tempR/32768.0;
+      		//printf( "f(%f,%f) ",  xL[i][REAL],xR[i][REAL] );
 		xL[i][IMAG] = 0;
 		xR[i][IMAG] = 0;
 	}
 	// compute the FFT of x and store the results in y
-	fft(xL, yL);
-	fft(xR, yR);
-	//fftw_execute(Lplan);
-	//fftw_execute(Rplan);
+	//fft(xL, yL);
+	//fft(xR, yR);
+	fftw_execute(Lplan);
+	fftw_execute(Rplan);
 	for (int i = 0; i < N; i++) {
 		mL[i]=yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL];
 		mR[i]=yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL];
@@ -503,11 +508,12 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	for (int i = 0; i < N; i++) {
 		mL[i]=sqrt(mL[i]);
 		mR[i]=sqrt(mR[i]);
+      		//printf( "f(%f,%f) ",  mL[i],mR[i] );
 		}
 
-      		printf( "%f - ", mL[0] );
+      		//printf( "%f - ", mL[0] );
 	makebins(binsL,mL);
-      		printf( "%f - ", mR[0] );
+      		//printf( "%f - ", mR[0] );
 	makebins(binsR,mR);
 	CurrentPanelBin=(CurrentPanelBin+1)%64;
 	for (int i=0;i<maxbins+2;i++){
@@ -519,7 +525,7 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 }
 int main (int argc, char *argv[])
 {
-  int i; //,buff_i,j;
+  int i=0; //,buff_i,j;
   //short * sampleLP;
   //short * sampleRP;
   int err;
@@ -539,6 +545,7 @@ int main (int argc, char *argv[])
   snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
 
   setupPanelBins();
+  makeWindow();
 
   if ((err = snd_pcm_open (&capture_handle, arg, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
     fprintf (stderr, "cannot open audio device %s (%s)\n", 
@@ -640,22 +647,25 @@ int main (int argc, char *argv[])
     }
   }
   while( !interrupt_received) {
+	i++;
+	i=i%buffers;
     avail_cap = snd_pcm_avail ( capture_handle  );
     
     fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
     //avail_cap=snd_pcm_avail_update( capture_handle);
 
-    if ((err = snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames)) != buffer_frames) {
+    if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
       fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
       exit (1);
     }
 	while (snd_pcm_avail_update( capture_handle) > buffer_frames){
-    		snd_pcm_readi (capture_handle, buffer[i%buffers], buffer_frames);
+    		snd_pcm_readi (capture_handle, buffer[i], buffer_frames);
     printf( " DROP \n");
 
 }
 
-    doFFT(i%buffers,buffer,canvas);
+//    printf( "%s\n",buffer[i]);
+    doFFT(i,buffer,canvas);
     //printf( "\n");
   }
 
