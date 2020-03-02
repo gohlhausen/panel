@@ -40,8 +40,8 @@ fftw_complex xL[N];
 fftw_complex xR[N];
 fftw_complex yL[N];
 fftw_complex yR[N];
-double mL[N];
-double mR[N];
+double mL[N/2];
+double mR[N/2];
 double PanelBinsL[64][maxbins+3];
 double PanelBinsR[64][maxbins+3];
 int CurrentPanelBin;
@@ -75,14 +75,19 @@ public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
 	int currow;
+    int starty=16;
+    int x,y;
     const int width = canvas()->width();
     const int height = canvas()->height();
     while (running() && !interrupt_received) {
-      for (int y = 0; y < height; ++y) {
+      for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
-        for (int x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+7)%25)==0)?(128):(0)); 
+        for (x = 0; x < width; ++x) {
+          canvas()->SetPixel(x, y+starty, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+7)%25)==0)?(128):(0)); 
         }
+      }
+      for (x = 0; x < width; ++x) {
+          canvas()->SetPixel(x, 0, (uint8_t)((PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0),0); 
       }
     }
   }
@@ -194,9 +199,10 @@ double retval=0;
 void makebins(double bins[], double yL[]){
 // bins[0]=average value
 // bins[256+1]=max value across all bins(not 0)
-double maxL=-12345678900;
+double maxL=0;
+double sumL=0;
 bins[0]=sumbins(yL,0,0);
-bins[1]=sumbins(yL,6,6);
+bins[1]=sumbins(yL,1,6);
 bins[2]=sumbins(yL,7,7);
 bins[3]=sumbins(yL,7,7);
 bins[4]=sumbins(yL,7,7);
@@ -453,12 +459,14 @@ bins[254]=sumbins(yL,7310,7514);
 bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
+	sumL=sumL+bins[i];
 	if(bins[i]>maxL){maxL=bins[i];
 //      	printf( "%d %f ", i,bins[i] );
 }
 	}
-bins[maxbins+2]=max(maxL,75.0);
-      		//printf( "%f\n", yL[0] );
+//bins[maxbins+2]=max(maxL,75.0);
+bins[maxbins+2]=maxL;
+      		fprintf(stderr, "%f %f ", sumL,bins[maxbins+2] );
 }
 
 char getMagnitudeChar(double magValue, double maxValue){
@@ -487,13 +495,10 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	for (int i = 0; i < N; i++) {
       		bufnum=(startbuffer+(i/buffer_frames))%buffers;
       		cursor= i%buffer_frames ;
-      		//printf( "f(%d,%d,0,0)\n",  bufnum,cursor );
 		tempL = (short)((unsigned int)buffer[bufnum][cursor*4]| (unsigned int)buffer[bufnum][cursor*4+1]<<8);
 		tempR = (short)((unsigned int)buffer[bufnum][cursor*4+2]| (unsigned int)buffer[bufnum][cursor*4+3]<<8);
-      		//printf( "f(%d,%d) ",  tempL,tempR );
-		xL[i][REAL] = window[i]*(double)tempL/32768.0;
-		xR[i][REAL] = window[i]*(double)tempR/32768.0;
-      		//printf( "f(%f,%f) ",  xL[i][REAL],xR[i][REAL] );
+		xL[i][REAL] = window[i]*((double)tempL/32768.0);
+		xR[i][REAL] = window[i]*((double)tempR/32768.0);
 		xL[i][IMAG] = 0;
 		xR[i][IMAG] = 0;
 	}
@@ -502,15 +507,15 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	//fft(xR, yR);
 	fftw_execute(Lplan);
 	fftw_execute(Rplan);
-	for (int i = 0; i < N; i++) {
-		mL[i]=yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL];
-		mR[i]=yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL];
+	for (int i = 0; i < N/2; i++) {
+		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL]);
+		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL]);
 		}
-	for (int i = 0; i < N; i++) {
-		mL[i]=sqrt(mL[i]);
-		mR[i]=sqrt(mR[i]);
-      		//printf( "f(%f,%f) ",  mL[i],mR[i] );
-		}
+	//for (int i = 0; i < N; i++) {
+	//	mL[i]=sqrt(mL[i]);
+	//	mR[i]=sqrt(mR[i]);
+      	//	//printf( "f(%f,%f) ",  mL[i],mR[i] );
+	//	}
 
       		//printf( "%f - ", mL[0] );
 	makebins(binsL,mL);
