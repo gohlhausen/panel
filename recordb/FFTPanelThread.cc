@@ -200,7 +200,6 @@ void makebins(double bins[], double yL[]){
 // bins[0]=average value
 // bins[256+1]=max value across all bins(not 0)
 double maxL=0;
-double sumL=0;
 bins[0]=sumbins(yL,0,0);
 bins[1]=sumbins(yL,1,6);
 bins[2]=sumbins(yL,7,7);
@@ -459,14 +458,14 @@ bins[254]=sumbins(yL,7310,7514);
 bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
-	sumL=sumL+bins[i];
+//	sumL=sumL+bins[i];
 	if(bins[i]>maxL){maxL=bins[i];
 //      	printf( "%d %f ", i,bins[i] );
 }
 	}
 //bins[maxbins+2]=max(maxL,75.0);
 bins[maxbins+2]=maxL;
-      		fprintf(stderr, "%f %f ", sumL,bins[maxbins+2] );
+      		fprintf(stderr, "%f ", bins[maxbins+2] );
 }
 
 char getMagnitudeChar(double magValue, double maxValue){
@@ -508,8 +507,8 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	fftw_execute(Lplan);
 	fftw_execute(Rplan);
 	for (int i = 0; i < N/2; i++) {
-		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL]);
-		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL]);
+		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL])/(double)(N/2);
+		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL])/(double)(N/2);
 		}
 	//for (int i = 0; i < N; i++) {
 	//	mL[i]=sqrt(mL[i]);
