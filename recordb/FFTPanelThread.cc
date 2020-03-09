@@ -26,6 +26,7 @@ using std::max;
 using namespace rgb_matrix;
 	      
 // macros for the real and imaginary parts
+#define PI 3.14159265
 #define REAL 0
 #define IMAG 1
 #define N 16384
@@ -70,28 +71,6 @@ void makeWindow(){
 	window[i]=0.5-0.5*cos((2.0*M_PI*i)/(N-i));
 	}
 }
-class updatePanel : public ThreadedCanvasManipulator {
-public:
-  updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
-  void Run() {
-	int currow;
-    int starty=16;
-    int x,y;
-    const int width = canvas()->width();
-    const int height = canvas()->height();
-    while (running() && !interrupt_received) {
-      for (y = 0; y < height-starty; ++y) {
-	currow=(64+(CurrentPanelBin-y))%64;
-        for (x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, y+starty, (uint8_t)((PanelBinsL[currow][x+1]/PanelBinsL[currow][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[currow][x+1]/PanelBinsR[currow][maxbins+2])*255.0),(((x+1+7)%25)==0)?(128):(0)); 
-        }
-      }
-      for (x = 0; x < width; ++x) {
-          canvas()->SetPixel(x, 0, (uint8_t)((PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0),  (uint8_t)((PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0),0); 
-      }
-    }
-  }
-};
 
 
 struct Color HSVtoColor(double H, double S, double V) {
@@ -132,26 +111,41 @@ struct Color HSVtoColor(double H, double S, double V) {
 		Bs = X;	
 	}
 	
-	retcolor.r = (uint8_t)((Rs + m) * 255);
-	retcolor.g = (uint8_t)((Gs + m) * 255);
-	retcolor.b = (uint8_t)((Bs + m) * 255);
+	//retcolor.r = (uint8_t)((Rs + m) * 255);
+	//retcolor.g = (uint8_t)((Gs + m) * 255);
+	//retcolor.b = (uint8_t)((Bs + m) * 255);
+	retcolor.r = (uint8_t) 255;
+	retcolor.g = (uint8_t) 255;
+	retcolor.b = (uint8_t) 255;
 	return(retcolor);
 }
 
 
 
-struct Color PixelColor(double volL, double volR){
+struct Color PixelColor(double volL, double volR, double maxL, double maxR){
 /*
 Right=240 hue
 Left=0 Hue
 Sat=100 always
 Lum=0 to 50 or 0 to 75
 m1,m2 should be volume related
-  x1 = Math.cos(hue1 / 180 * Math.PI) * saturation1;
-  y1 = Math.sin(hue1 / 180 * Math.PI) * saturation1;
+*/
+double hue1=0.0;
+double hue2=240.0;
+double saturation1=100.0;
+double saturation2=100.0;
+double lightness1=50.0;
+double lightness2=50.0;
+double x1,x2,y1,y2,z1,z2;
+double m1, m2, magmax,x,y,z,h,s,l,mag1,mag2;
+m1=(volL/maxL);
+m2=(volR/maxR);
+
+  x1 = cos(hue1 / 180 * PI) * saturation1;
+  y1 = sin(hue1 / 180 * PI) * saturation1;
   z1 = lightness1;
-  x2 = Math.cos(hue2 / 180 * Math.PI) * saturation2;
-  y2 = Math.sin(hue2 / 180 * Math.PI) * saturation2;
+  x2 = cos(hue2 / 180 * PI) * saturation2;
+  y2 = sin(hue2 / 180 * PI) * saturation2;
   z2 = lightness2;
   magmax=m1+m2;
   mag1=m1/magmax;
@@ -159,15 +153,37 @@ m1,m2 should be volume related
   x=(x1*mag1)+(x2*mag2);
   y=(y1*mag1)+(y2*mag2);
   z=(z1+z2)/2;
-  h = Math.atan2(y, x) * 180 / Math.PI;
-  s = Math.sqrt(x * x + y * y);
+  h = atan2(y, x) * 180 / PI;
+  s = sqrt(x * x + y * y);
   l = z;
-*/
-double h=0.0;
-double s=0.0;
-double l=0.0;
 return(HSVtoColor(h,s,l));
 }
+
+class updatePanel : public ThreadedCanvasManipulator {
+public:
+  updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  void Run() {
+	int currow;
+    int starty=16;
+    int x,y;
+    struct Color pcolor;
+    const int width = canvas()->width();
+    const int height = canvas()->height();
+    while (running() && !interrupt_received) {
+      for (y = 0; y < height-starty; ++y) {
+	currow=(64+(CurrentPanelBin-y))%64;
+        for (x = 0; x < width; ++x) {
+	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2]);
+          canvas()->SetPixel(x, y+starty, pcolor.r,pcolor.g,pcolor.b); 
+        }
+      }
+      for (x = 0; x < width; ++x) {
+	  pcolor=PixelColor(PanelBinsL[CurrentPanelBin][x+1],PanelBinsR[CurrentPanelBin][x+1],PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
+          canvas()->SetPixel(x, 0, pcolor.r,pcolor.g,pcolor.b); 
+      }
+    }
+  }
+};
 
 /* Computes the 1-D fast Fourier transform. */
 void fft(fftw_complex *in, fftw_complex *out)
@@ -545,6 +561,7 @@ int main (int argc, char *argv[])
   defaults.rows=64;
   defaults.cols=256;
   defaults.chain_length=1;
+  //defaults.slowdown_gpio=3;  Modified options-initilaize.cc to default to 3 instead
   defaults.row_address_type=4;
   defaults.panel_type="fm6127";  
   snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;

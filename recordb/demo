@@ -1,0 +1,2 @@
+/root/panel/rpi-rgb-led-matrix/examples-api-use/demo -t 10 -D 0 --led-rows=64 --led-cols=256 --led-row-addr-type=4 --led-gpio-mapping=adafruit-hat-pwm  --led-slowdown-gpio=5 --led-panel-type=FM6127 --led-show-refresh
+
