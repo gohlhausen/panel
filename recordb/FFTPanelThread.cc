@@ -111,12 +111,12 @@ struct Color HSVtoColor(double H, double S, double V) {
 		Bs = X;	
 	}
 	
-	//retcolor.r = (uint8_t)((Rs + m) * 255);
-	//retcolor.g = (uint8_t)((Gs + m) * 255);
-	//retcolor.b = (uint8_t)((Bs + m) * 255);
-	retcolor.r = (uint8_t) 255;
-	retcolor.g = (uint8_t) 255;
-	retcolor.b = (uint8_t) 255;
+	retcolor.r = (uint8_t)((Rs + m) * 255);
+	retcolor.g = (uint8_t)((Gs + m) * 255);
+	retcolor.b = (uint8_t)((Bs + m) * 255);
+	//retcolor.r = (uint8_t) 255;
+	//retcolor.g = (uint8_t) 255;
+	//retcolor.b = (uint8_t) 255;
 	return(retcolor);
 }
 
@@ -130,33 +130,24 @@ Sat=100 always
 Lum=0 to 50 or 0 to 75
 m1,m2 should be volume related
 */
-double hue1=0.0;
-double hue2=240.0;
-double saturation1=100.0;
-double saturation2=100.0;
-double lightness1=50.0;
-double lightness2=50.0;
-double x1,x2,y1,y2,z1,z2;
-double m1, m2, magmax,x,y,z,h,s,l,mag1,mag2;
-m1=(volL/maxL);
-m2=(volR/maxR);
-
-  x1 = cos(hue1 / 180 * PI) * saturation1;
-  y1 = sin(hue1 / 180 * PI) * saturation1;
-  z1 = lightness1;
-  x2 = cos(hue2 / 180 * PI) * saturation2;
-  y2 = sin(hue2 / 180 * PI) * saturation2;
-  z2 = lightness2;
-  magmax=m1+m2;
-  mag1=m1/magmax;
-  mag2=m2/magmax;
-  x=(x1*mag1)+(x2*mag2);
-  y=(y1*mag1)+(y2*mag2);
-  z=(z1+z2)/2;
-  h = atan2(y, x) * 180 / PI;
-  s = sqrt(x * x + y * y);
-  l = z;
-return(HSVtoColor(h,s,l));
+struct Color retcolor;
+double r1=0.0,b1=0.0;
+double g1=0.0;
+double d1=0.0;
+double m1=0.0,m2;
+m1=max(maxL,maxR);
+m2=1.0/m1;
+d1=(volL-volR)/m1;
+if(d1 < 0){
+	r1=(1-d1)*512.0;
+} else {
+b1=(d1)*512.0;
+};
+g1=512.0-abs(d1)*512.0;
+retcolor.r=(uint8_t)(min(r1,255.0)*m2);
+retcolor.b=(uint8_t)(min(b1,255.0)*m2);
+retcolor.g=(uint8_t)(min(g1,255.0)*m2);
+return(retcolor);
 }
 
 class updatePanel : public ThreadedCanvasManipulator {
@@ -174,12 +165,12 @@ public:
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
 	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2]);
-          canvas()->SetPixel(x, y+starty, pcolor.r,pcolor.g,pcolor.b); 
+          canvas()->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
         }
       }
       for (x = 0; x < width; ++x) {
 	  pcolor=PixelColor(PanelBinsL[CurrentPanelBin][x+1],PanelBinsR[CurrentPanelBin][x+1],PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
-          canvas()->SetPixel(x, 0, pcolor.r,pcolor.g,pcolor.b); 
+          canvas()->SetPixel(x, 0, pcolor.r,pcolor.b,pcolor.g); 
       }
     }
   }
