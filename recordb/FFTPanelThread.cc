@@ -32,7 +32,7 @@ using namespace rgb_matrix;
 #define N 16384
 #define maxbins 256
 #define buffers 16
-#define buffer_frames 2048
+#define buffer_frames 1024
 //1024
 
 
@@ -136,27 +136,38 @@ double g1=0.0;
 double d1=0.0;
 double m1=0.0,m2;
 m1=max(maxL,maxR);
-m2=1.0/m1;
-d1=(volL-volR)/m1;
-if(d1 < 0){
-	r1=(1-d1)*512.0;
+m2=max(volL,volR);
+r1=(min((volL/maxL)*512.0,512.0));
+b1=(min((volR/maxR)*512.0,512.0));
+d1=r1-b1;
+if(d1>0){
+retcolor.r=(uint8_t)(min(d1,255.0))*m2;
+retcolor.b=(uint8_t)0;
 } else {
-b1=(d1)*512.0;
-};
-g1=512.0-abs(d1)*512.0;
-retcolor.r=(uint8_t)(min(r1,255.0)*m2);
-retcolor.b=(uint8_t)(min(b1,255.0)*m2);
-retcolor.g=(uint8_t)(min(g1,255.0)*m2);
+retcolor.r=(uint8_t)0;
+retcolor.b=(uint8_t)(min(-1*d1,255.0))*m2;
+}
+retcolor.g=(uint8_t)min(512.0-abs(d1),255.0)*m2;
+//retcolor.r=(uint8_t);
+//retcolor.b=(uint8_t);
+//retcolor.g=(uint8_t);
+
+
+//retcolor.r=(uint8_t)(min((volL/maxL)*255.0,255.0));
+//retcolor.b=(uint8_t)(min((volR/maxR)*255.0,255.0));
+//retcolor.g=0;//(uint8_t)(min(m1*255.0,255.0));
 return(retcolor);
 }
+
 
 class updatePanel : public ThreadedCanvasManipulator {
 public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
 	int currow;
-    int starty=16;
+    int starty=18;
     int x,y;
+    int cheight;
     struct Color pcolor;
     const int width = canvas()->width();
     const int height = canvas()->height();
@@ -169,8 +180,17 @@ public:
         }
       }
       for (x = 0; x < width; ++x) {
-	  pcolor=PixelColor(PanelBinsL[CurrentPanelBin][x+1],PanelBinsR[CurrentPanelBin][x+1],PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
-          canvas()->SetPixel(x, 0, pcolor.r,pcolor.b,pcolor.g); 
+//	  pcolor=PixelColor(PanelBinsL[CurrentPanelBin][x+1],PanelBinsR[CurrentPanelBin][x+1],PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
+	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
+	for(y=0;y<16;y++){
+	  if ((16-y)<=cheight){
+            canvas()->SetPixel(x, y, 0,((x+8)%25==0)?(128):(0),255); 
+	  } else {
+            canvas()->SetPixel(x, y,0,0,0); 
+	  }
+        }
+        canvas()->SetPixel(x, 16, ((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0)); 
+        canvas()->SetPixel(x, 17, ((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0)); 
       }
     }
   }
@@ -472,7 +492,7 @@ for (int i = 1; i <= maxbins; i++) {
 	}
 //bins[maxbins+2]=max(maxL,75.0);
 bins[maxbins+2]=maxL;
-      		fprintf(stderr, "%f ", bins[maxbins+2] );
+      		///fprintf(stderr, "%f ", bins[maxbins+2] );
 }
 
 char getMagnitudeChar(double magValue, double maxValue){
@@ -664,7 +684,7 @@ int main (int argc, char *argv[])
 	i=i%buffers;
     avail_cap = snd_pcm_avail ( capture_handle  );
     
-    fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
+    //fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
     //avail_cap=snd_pcm_avail_update( capture_handle);
 
     if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
