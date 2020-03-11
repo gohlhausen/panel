@@ -219,7 +219,7 @@ double retval=0;
 	for(int i=startb;i<=endb;i++){
 		retval+=sbins[i];
 		}
-
+	retval=retval/(abs(endb-startb)+1);
 	return(retval);
 }
 
