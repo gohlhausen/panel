@@ -72,57 +72,70 @@ void makeWindow(){
 	}
 }
 
+double hue2rgb(double p, double q, double t) {
+      if (t < 0){ t += 1.0;}
+      if (t > 1){ t -= 1.0;}
+      if (t < 1.0/6.0){ return(p + (q - p) * 6.0 * t);}
+      if (t < 1.0/2.0){ return(q);}
+      if (t < 2.0/3.0){ return(p + (q - p) * (2.0/3.0 - t) * 6.0);}
+      return(p);
+    }
 
-struct Color HSVtoColor(double H, double S, double V) {
-	double C = S * V;
-	double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
-	double m = V - C;
-	double Rs, Gs, Bs;
-	struct Color retcolor;
+struct Color HSLtoColor(double hh, double ss, double ll) {
+  double h=hh/360.0;
+  double s=ss/100.0;
+  double l=ll/100.0;
+  double r, g, b,q,p;
+  struct Color retcolor;
+  if (s == 0.0) {
+    r = l;
+    g = l;
+    b = l; // achromatic
+  } else {
+    if(l < 0.5){
+      q = l * (1.0 + s);
+	} else {
+      q = (l + s) - (l * s);
+	}
+    p = 2 * l - q;
 
-	if(H >= 0 && H < 60) {
-		Rs = C;
-		Gs = X;
-		Bs = 0;	
-	}
-	else if(H >= 60 && H < 120) {	
-		Rs = X;
-		Gs = C;
-		Bs = 0;	
-	}
-	else if(H >= 120 && H < 180) {
-		Rs = 0;
-		Gs = C;
-		Bs = X;	
-	}
-	else if(H >= 180 && H < 240) {
-		Rs = 0;
-		Gs = X;
-		Bs = C;	
-	}
-	else if(H >= 240 && H < 300) {
-		Rs = X;
-		Gs = 0;
-		Bs = C;	
-	}
-	else {
-		Rs = C;
-		Gs = 0;
-		Bs = X;	
-	}
-	
-	retcolor.r = (uint8_t)((Rs + m) * 255);
-	retcolor.g = (uint8_t)((Gs + m) * 255);
-	retcolor.b = (uint8_t)((Bs + m) * 255);
-	//retcolor.r = (uint8_t) 255;
-	//retcolor.g = (uint8_t) 255;
-	//retcolor.b = (uint8_t) 255;
-	return(retcolor);
+    r = hue2rgb(p, q, h + (1.0/3.0));
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - (1.0/3.0));
+  }
+ retcolor.r=(uint8_t)(r*255.0);
+ retcolor.g=(uint8_t)(g*255.0);
+ retcolor.b=(uint8_t)(b*255.0);
+ return(retcolor);
+}
+
+struct Color PixelColor(double volL, double volR, double maxL, double maxR){
+/*
+Right=240 hue
+Left=0 Hue
+Sat=100 always
+Lum=0 to 50 or 0 to 75
+m1,m2 should be volume related
+*/
+struct Color retcolor;
+double hue;
+double sat=100.0;
+double lum;
+double minlum=5.0;
+double maxV;
+double curV;
+double difV;
+maxV=max(maxL,maxR);
+curV=max(volL,volR);
+difV=volL-volR;
+hue=120.0+(120.0*(difV*(1/maxV)));
+lum=minlum+(50.0*(curV*(1/maxV)));
+retcolor=HSLtoColor(hue,sat,lum);
+return(retcolor);
 }
 
 
-
-struct Color PixelColor(double volL, double volR, double maxL, double maxR){
+struct Color OldPixelColor(double volL, double volR, double maxL, double maxR){
 /*
 Right=240 hue
 Left=0 Hue
@@ -137,25 +150,18 @@ double d1=0.0;
 double m1=0.0,m2;
 m1=max(maxL,maxR);
 m2=max(volL,volR);
-r1=(min((volL/maxL)*512.0,512.0));
-b1=(min((volR/maxR)*512.0,512.0));
-d1=r1-b1;
+r1=(volL/maxL);
+b1=(volR/maxR);
+d1=(r1-b1)/m1;
 if(d1>0){
-retcolor.r=(uint8_t)(min(d1,255.0))*m2;
-retcolor.b=(uint8_t)0;
+retcolor.r=(uint8_t)(r1*255.0*(1.0/m1));
+retcolor.b=(uint8_t)(b1*255.0*(1.0/m1));
+retcolor.g=(uint8_t)(r1*255.0*(1.0/m1));
 } else {
-retcolor.r=(uint8_t)0;
-retcolor.b=(uint8_t)(min(-1*d1,255.0))*m2;
+retcolor.r=(uint8_t)(r1*255.0*(1.0/m1));
+retcolor.b=(uint8_t)(b1*255.0*(1.0/m1));
+retcolor.g=(uint8_t)(b1*255.0*(1.0/m1));
 }
-retcolor.g=(uint8_t)min(512.0-abs(d1),255.0)*m2;
-//retcolor.r=(uint8_t);
-//retcolor.b=(uint8_t);
-//retcolor.g=(uint8_t);
-
-
-//retcolor.r=(uint8_t)(min((volL/maxL)*255.0,255.0));
-//retcolor.b=(uint8_t)(min((volR/maxR)*255.0,255.0));
-//retcolor.g=0;//(uint8_t)(min(m1*255.0,255.0));
 return(retcolor);
 }
 
@@ -180,7 +186,6 @@ public:
         }
       }
       for (x = 0; x < width; ++x) {
-//	  pcolor=PixelColor(PanelBinsL[CurrentPanelBin][x+1],PanelBinsR[CurrentPanelBin][x+1],PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
 	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
 	for(y=0;y<16;y++){
 	  if ((16-y)<=cheight){
@@ -189,8 +194,14 @@ public:
             canvas()->SetPixel(x, y,0,0,0); 
 	  }
         }
-        canvas()->SetPixel(x, 16, ((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0)); 
-        canvas()->SetPixel(x, 17, ((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0),((x+8)%25==0)?(128):(0)); 
+	if ((x+8)%25==0){
+        canvas()->SetPixel(x, 16, 128,128,128); 
+        canvas()->SetPixel(x, 17, 128,128,128); 
+	} else {
+        canvas()->SetPixel(x, 16, ((PanelBinsL[CurrentPanelBin][0]*(1/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0,0); 
+        canvas()->SetPixel(x, 17, 0,((PanelBinsR[CurrentPanelBin][0]*(1/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0); 
+	}
+
       }
     }
   }
@@ -485,33 +496,17 @@ bins[254]=sumbins(yL,7310,7514);
 bins[255]=sumbins(yL,7515,7725);
 bins[256]=sumbins(yL,7726,8191); //7943);
 for (int i = 1; i <= maxbins; i++) {
-//	sumL=sumL+bins[i];
 	if(bins[i]>maxL){maxL=bins[i];
-//      	printf( "%d %f ", i,bins[i] );
 }
 	}
-//bins[maxbins+2]=max(maxL,75.0);
-bins[maxbins+2]=maxL;
-      		///fprintf(stderr, "%f ", bins[maxbins+2] );
+bins[maxbins+2]=max(maxL,0.050);
 }
 
-char getMagnitudeChar(double magValue, double maxValue){
-	//char* magnitudes="_.,-=~'";
-	const char *magnitudes="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	//return(magnitudes[(int)(magValue/maxValue*7.0)]);
-	return(magnitudes[(int)(magValue/maxValue*36.0)]);
-}
 
 
 
 int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 {
-	//fftw_complex xL[N];
-	//fftw_complex xR[N];
-	//fftw_complex yL[N];
-	//fftw_complex yR[N];
-	//double mL[N];
-	//double mR[N];
 	double binsL[maxbins+3];
 	double binsR[maxbins+3];
 	short tempL;
@@ -528,31 +523,20 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 		xL[i][IMAG] = 0;
 		xR[i][IMAG] = 0;
 	}
-	// compute the FFT of x and store the results in y
-	//fft(xL, yL);
-	//fft(xR, yR);
 	fftw_execute(Lplan);
 	fftw_execute(Rplan);
 	for (int i = 0; i < N/2; i++) {
 		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL])/(double)(N/2);
 		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL])/(double)(N/2);
 		}
-	//for (int i = 0; i < N; i++) {
-	//	mL[i]=sqrt(mL[i]);
-	//	mR[i]=sqrt(mR[i]);
-      	//	//printf( "f(%f,%f) ",  mL[i],mR[i] );
-	//	}
 
-      		//printf( "%f - ", mL[0] );
 	makebins(binsL,mL);
-      		//printf( "%f - ", mR[0] );
 	makebins(binsR,mR);
 	CurrentPanelBin=(CurrentPanelBin+1)%64;
 	for (int i=0;i<maxbins+3;i++){
 		PanelBinsL[CurrentPanelBin][i]=binsL[i];
 		PanelBinsR[CurrentPanelBin][i]=binsR[i];
 		}
-	//updatePanel(binsL,binsR,canvas);
     return 0;
 }
 int main (int argc, char *argv[])
