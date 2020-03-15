@@ -29,6 +29,7 @@ using namespace rgb_matrix;
 #define PI 3.14159265
 #define REAL 0
 #define IMAG 1
+#define BRIGHTNESS  32
 #define N 16384
 #define maxbins 256
 #define buffers 16
@@ -109,7 +110,7 @@ struct Color HSLtoColor(double hh, double ss, double ll) {
  return(retcolor);
 }
 
-struct Color PixelColor(double volL, double volR, double maxL, double maxR){
+struct Color PixelColor(double volL, double volR, double maxL, double maxR,int Brighter){
 /*
 Right=240 hue
 Left=0 Hue
@@ -131,6 +132,9 @@ difV=volL-volR;
 hue=120.0+(120.0*(difV*(1/maxV)));
 lum=minlum+(50.0*(curV*(1/maxV)));
 retcolor=HSLtoColor(hue,sat,lum);
+retcolor.r=min(retcolor.r+Brighter,255);
+retcolor.g=min(retcolor.g+Brighter,255);
+retcolor.b=min(retcolor.b+Brighter,255);
 return(retcolor);
 }
 
@@ -181,7 +185,7 @@ public:
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
-	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2]);
+	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2],((x+8)%25==0)?(BRIGHTNESS):(0));
           canvas()->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
         }
       }
@@ -189,9 +193,9 @@ public:
 	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
 	for(y=0;y<16;y++){
 	  if ((16-y)<=cheight){
-            canvas()->SetPixel(x, y, 0,((x+8)%25==0)?(128):(0),255); 
+            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),255); 
 	  } else {
-            canvas()->SetPixel(x, y,0,0,0); 
+            canvas()->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
         }
 	if ((x+8)%25==0){
