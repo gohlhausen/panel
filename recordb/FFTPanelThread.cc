@@ -135,6 +135,9 @@ retcolor=HSLtoColor(hue,sat,lum);
 retcolor.r=min(retcolor.r+Brighter,255);
 retcolor.g=min(retcolor.g+Brighter,255);
 retcolor.b=min(retcolor.b+Brighter,255);
+if(volL == maxL){retcolor.b=255;};
+if(volR == maxR){retcolor.r=255;};
+if((volR == maxR) && (volL == maxL)){retcolor.g=255;};
 return(retcolor);
 }
 
@@ -681,7 +684,7 @@ int main (int argc, char *argv[])
     }
 	while (snd_pcm_avail_update( capture_handle) > buffer_frames){
     		snd_pcm_readi (capture_handle, buffer[i], buffer_frames);
-    printf( " DROP \n");
+//    printf( " DROP \n");
 
 }
 
