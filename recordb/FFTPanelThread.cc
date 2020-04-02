@@ -194,9 +194,11 @@ public:
       }
       for (x = 0; x < width; ++x) {
 	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
+	bool rmax=PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2];
+	bool lmax=PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2];
 	for(y=0;y<16;y++){
 	  if ((16-y)<=cheight){
-            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),255); 
+            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(rmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(lmax?255:0),(rmax!=lmax?0:255)); 
 	  } else {
             canvas()->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
