@@ -34,6 +34,7 @@ using namespace rgb_matrix;
 #define maxbins 256
 #define buffers 16
 #define buffer_frames 1024
+#define HzperBin 3.011292346
 //1024
 
 
@@ -44,6 +45,10 @@ fftw_complex yL[N];
 fftw_complex yR[N];
 double mL[N/2];
 double mR[N/2];
+double maxmL;
+double maxmR;
+int maxmLbin;
+int maxmRbin;
 double PanelBinsL[64][maxbins+3];
 double PanelBinsR[64][maxbins+3];
 int CurrentPanelBin;
@@ -194,11 +199,10 @@ public:
       }
       for (x = 0; x < width; ++x) {
 	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
-	bool rmax=PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2];
-	bool lmax=PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2];
+	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
 	for(y=0;y<16;y++){
 	  if ((16-y)<=cheight){
-            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(rmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(lmax?255:0),(rmax!=lmax?0:255)); 
+            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
 	  } else {
             canvas()->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
@@ -212,6 +216,7 @@ public:
 	}
 
       }
+//	canvas()->SetFont(1,48,);
     }
   }
 };
@@ -534,9 +539,21 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	}
 	fftw_execute(Lplan);
 	fftw_execute(Rplan);
+	//maxmL=0.0;
+	//maxmR=0.0;
+	//maxmLbin=0;
+	//maxmRbin=0;
 	for (int i = 0; i < N/2; i++) {
 		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL])/(double)(N/2);
 		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL])/(double)(N/2);
+	//	if(mL[i]>maxmL){
+	//		maxmL=mL[i];
+	//		maxmLbin=i;
+	//		}
+	//	if(mR[i]>maxmR){
+	//		maxmR=mR[i];
+	//		maxmRbin=i;
+	//		}
 		}
 
 	makebins(binsL,mL);
