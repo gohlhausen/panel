@@ -201,12 +201,10 @@ void PrintFreq()
       // The outline font, we need to write with a negative (-2) text-spacing,
       // as we want to have the same letter pitch as the regular text that
       // we then write on top.
-      //rgb_matrix::DrawText(canvas(), *outline_font,1, 62, fg_color, &bg_color, line, -2);
-      rgb_matrix::DrawText(canvas(), *outline_font,1, 62, fg_color, NULL, line, -2);
+      rgb_matrix::DrawText(canvas(), *outline_font,1, 62, bg_color, NULL, line, -2);
     	}
     // The regular text. Unless we already have filled the background with
     // the outline font, we also fill the background here.
-    //rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  &bg_color, line,0);
     rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  NULL, line,0);
 }
   void Run() {
