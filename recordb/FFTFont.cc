@@ -1,5 +1,6 @@
 // S16_LE is short datatype
-/// 3.011292346 hZ per bin (bin spacing)
+/// 3.011292346 hZ per bin (bin spacing) 1.0281 percent fast
+/// 2.928987789 hZ per bin (bin spacing) corrected
 
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
@@ -34,7 +35,7 @@ using namespace rgb_matrix;
 #define maxbins 256
 #define buffers 16
 #define buffer_frames 1024
-#define HzperBin 3.011292346
+#define HzperBin 2.928987789
 //1024
 
 
