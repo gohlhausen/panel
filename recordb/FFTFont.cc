@@ -40,6 +40,10 @@ using namespace rgb_matrix;
 
   rgb_matrix::Font font;
   rgb_matrix::Font *outline_font = NULL;
+int letter_spacing=0;
+char line[50];
+Color fg_color(255, 0, 255);
+Color bg_color(0, 0, 0);
 double window[N];
 fftw_complex xL[N];
 fftw_complex xR[N];
@@ -190,6 +194,21 @@ return(retcolor);
 class updatePanel : public ThreadedCanvasManipulator {
 public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
+void PrintFreq()
+{
+	sprintf(line,"%5.0f %5.0f",maxmLbin*HzperBin,maxmRbin*HzperBin);
+    if (outline_font) {
+      // The outline font, we need to write with a negative (-2) text-spacing,
+      // as we want to have the same letter pitch as the regular text that
+      // we then write on top.
+      //rgb_matrix::DrawText(canvas(), *outline_font,1, 62, fg_color, &bg_color, line, -2);
+      rgb_matrix::DrawText(canvas(), *outline_font,1, 62, fg_color, NULL, line, -2);
+    	}
+    // The regular text. Unless we already have filled the background with
+    // the outline font, we also fill the background here.
+    //rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  &bg_color, line,0);
+    rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  NULL, line,0);
+}
   void Run() {
 	int currow;
     int starty=18;
@@ -199,6 +218,7 @@ public:
     const int width = canvas()->width();
     const int height = canvas()->height();
     while (running() && !interrupt_received) {
+	PrintFreq();
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
@@ -225,20 +245,7 @@ public:
 	}
 
       }
-//	canvas()->SetFont(1,48,);
-    if (outline_font) {
-      // The outline font, we need to write with a negative (-2) text-spacing,
-      // as we want to have the same letter pitch as the regular text that
-      // we then write on top.
-      rgb_matrix::DrawText(canvas, *outline_font,
-                           x - 1, y + font.baseline(),
-                           RGBtoColor(255,255,255), RGBtoColor(0,0,0), line, letter_spacing - 2);
-    }
-    // The regular text. Unless we already have filled the background with
-    // the outline font, we also fill the background here.
-    rgb_matrix::DrawText(canvas, font, x, y + font.baseline(),
-                         RGBtoCOlor(255,255,255), outline_font ? NULL : RGBtoColor(0,0,0), line,
-                         letter_spacing);
+	PrintFreq();
     }
   }
 };
@@ -561,21 +568,21 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	}
 	fftw_execute(Lplan);
 	fftw_execute(Rplan);
-	//maxmL=0.0;
-	//maxmR=0.0;
-	//maxmLbin=0;
-	//maxmRbin=0;
+	maxmL=0.0;
+	maxmR=0.0;
+	maxmLbin=0;
+	maxmRbin=0;
 	for (int i = 0; i < N/2; i++) {
 		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL])/(double)(N/2);
 		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL])/(double)(N/2);
-	//	if(mL[i]>maxmL){
-	//		maxmL=mL[i];
-	//		maxmLbin=i;
-	//		}
-	//	if(mR[i]>maxmR){
-	//		maxmR=mR[i];
-	//		maxmRbin=i;
-	//		}
+		if(mL[i]>maxmL){
+			maxmL=mL[i];
+			maxmLbin=i;
+			}
+		if(mR[i]>maxmR){
+			maxmR=mR[i];
+			maxmRbin=i;
+			}
 		}
 
 	makebins(binsL,mL);
@@ -589,8 +596,8 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 }
 int main (int argc, char *argv[])
 {
-  const char *bdf_font_file = NULL;
-  bool with_outline=true;
+  const char *bdf_font_file = "9x18B.bdf";//NULL;
+  bool with_outline=false;
   int i=0; //,buff_i,j;
   //short * sampleLP;
   //short * sampleRP;
