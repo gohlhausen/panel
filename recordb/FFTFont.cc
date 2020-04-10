@@ -171,11 +171,11 @@ m1,m2 should be volume related
 */
 struct Color retcolor;
 double r1=0.0,b1=0.0;
-double g1=0.0;
 double d1=0.0;
-double m1=0.0,m2;
+double m1=0.0;
+//double m2=0.0;
 m1=max(maxL,maxR);
-m2=max(volL,volR);
+//m2=max(volL,volR);
 r1=(volL/maxL);
 b1=(volR/maxR);
 d1=(r1-b1)/m1;
@@ -197,15 +197,7 @@ public:
   updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
 void PrintFreq()
 {
-	sprintf(line,"%5.0f %5.0f",maxmLbin*HzperBin,maxmRbin*HzperBin);
-    if (outline_font) {
-      // The outline font, we need to write with a negative (-2) text-spacing,
-      // as we want to have the same letter pitch as the regular text that
-      // we then write on top.
-      rgb_matrix::DrawText(canvas(), *outline_font,1, 62, bg_color, NULL, line, -2);
-    	}
-    // The regular text. Unless we already have filled the background with
-    // the outline font, we also fill the background here.
+    sprintf(line,"%5.0f %5.0f",maxmLbin*HzperBin,maxmRbin*HzperBin);
     rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  NULL, line,0);
 }
   void Run() {
@@ -571,7 +563,7 @@ int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
 	maxmR=0.0;
 	maxmLbin=0;
 	maxmRbin=0;
-	for (int i = 0; i < N/2; i++) {
+	for (int i = N/2; i>0;i--) {
 		mL[i]=sqrt(yL[i][IMAG]*yL[i][IMAG]+yL[i][REAL]*yL[i][REAL])/(double)(N/2);
 		mR[i]=sqrt(yR[i][IMAG]*yR[i][IMAG]+yR[i][REAL]*yR[i][REAL])/(double)(N/2);
 		if(mL[i]>maxmL){
@@ -606,7 +598,7 @@ int main (int argc, char *argv[])
   unsigned int rate = 48000;
   snd_pcm_t *capture_handle;
   snd_pcm_hw_params_t *hw_params;
-  snd_pcm_sframes_t avail_cap;
+//  snd_pcm_sframes_t avail_cap;
   RGBMatrix::Options defaults;
   defaults.hardware_mapping="adafruit-hat-pwm";
   defaults.rows=64;
@@ -737,7 +729,8 @@ int main (int argc, char *argv[])
   while( !interrupt_received) {
 	i++;
 	i=i%buffers;
-    avail_cap = snd_pcm_avail ( capture_handle  );
+    //avail_cap = snd_pcm_avail ( capture_handle  );
+    snd_pcm_avail ( capture_handle  );
     
     //fprintf (stderr,"snd_pcm_avail: %ld \n", (avail_cap=snd_pcm_avail_update( capture_handle  ))  );
     //avail_cap=snd_pcm_avail_update( capture_handle);
