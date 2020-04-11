@@ -194,51 +194,52 @@ return(retcolor);
 
 class updatePanel : public ThreadedCanvasManipulator {
 public:
-  updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {}
-void PrintFreq()
-{
-    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
-    rgb_matrix::DrawText(canvas(), font, 2, 62,fg_color,  NULL, line,0);
+  updatePanel(Canvas *m) : ThreadedCanvasManipulator(m) {
+	off_screen_canvas_ = m->CreateFrameCanvas();
 }
+
   void Run() {
+
+
+  // Create a new canvas to be used with led_matrix_swap_on_vsync
+  FrameCanvas *offscreen_canvas = canvas()->CreateFrameCanvas();
 	int currow;
     int starty=18;
     int x,y;
     int cheight;
     struct Color pcolor;
-    const int width = canvas()->width();
-    const int height = canvas()->height();
+    const int width = offscreen_canvas->width();
+    const int height = offscreen_canvas->height();
     while (running() && !interrupt_received) {
-//	PrintFreq();
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
 	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2],((x+8)%25==0)?(BRIGHTNESS):(0));
-          canvas()->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
+   	    offscreen_canvas->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
         }
       }
-
-      PrintFreq();
       for (x = 0; x < width; ++x) {
 	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
 	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
 	for(y=0;y<16;y++){
 	  if ((16-y)<=cheight){
-            canvas()->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
+            offscreen_canvas->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
 	  } else {
-            canvas()->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
+            offscreen_canvas->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
         }
 	if ((x+8)%25==0){
-        canvas()->SetPixel(x, 16, 128,128,128); 
-        canvas()->SetPixel(x, 17, 128,128,128); 
+        offscreen_canvas->SetPixel(x, 16, 128,128,128); 
+        offscreen_canvas->SetPixel(x, 17, 128,128,128); 
 	} else {
-        canvas()->SetPixel(x, 16, ((PanelBinsL[CurrentPanelBin][0]*(1/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0,0); 
-        canvas()->SetPixel(x, 17, 0,((PanelBinsR[CurrentPanelBin][0]*(1/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0); 
+        offscreen_canvas->SetPixel(x, 16, ((PanelBinsL[CurrentPanelBin][0]*(1/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0,0); 
+        offscreen_canvas->SetPixel(x, 17, 0,((PanelBinsR[CurrentPanelBin][0]*(1/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0); 
 	}
 
       }
-//	PrintFreq();
+    sprintf(line,"%5.0f %5.0f",maxmLbin*HzperBin,maxmRbin*HzperBin);
+    rgb_matrix::DrawText(offscreen_canvas, font, 2, 62,fg_color,  NULL, line,0);
+    offscreen_canvas = canvas()->SwapOnVSync(offscreen_canvas);
     }
   }
 };
@@ -541,7 +542,7 @@ bins[maxbins+2]=max(maxL,0.050);
 
 
 
-int doFFT(int startbuffer, char *buffer[], Canvas *canvas)
+int doFFT(int startbuffer, char *buffer[])
 {
 	double binsL[maxbins+3];
 	double binsR[maxbins+3];
@@ -748,7 +749,7 @@ int main (int argc, char *argv[])
 }
 
 //    printf( "%s\n",buffer[i]);
-    doFFT(i,buffer,canvas);
+    doFFT(i,buffer);
     //printf( "\n");
   }
 
