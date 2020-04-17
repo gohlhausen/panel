@@ -19,9 +19,9 @@
 
 #include <algorithm>
 #include <alsa/asoundlib.h>
-using rgb_matrix::GPIO;
-using rgb_matrix::RGBMatrix;
-using rgb_matrix::Canvas;
+//using rgb_matrix::GPIO;
+//using rgb_matrix::RGBMatrix;
+//using rgb_matrix::Canvas;
 using std::min;
 using std::max;
 using namespace rgb_matrix;
