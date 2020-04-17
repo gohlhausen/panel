@@ -217,7 +217,7 @@ void PrintFreq()
     const int height = UPOffscreenCanvas->height();
     while (running() && !interrupt_received) {
 //	PrintFreq();
-//	UPOffscreenCanvas->Fill(0,0,0);
+	UPOffscreenCanvas->Fill(255,128,64);
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
@@ -228,15 +228,16 @@ void PrintFreq()
 
       PrintFreq();
       for (x = 0; x < width; ++x) {
-	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*16);
+	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*18);
 	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
-	for(y=0;y<16;y++){
-	  if ((16-y)<=cheight){
+	for(y=0;y<18;y++){
+	  if ((18-y)<=cheight){
             UPOffscreenCanvas->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
 	  } else {
             UPOffscreenCanvas->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
         }
+/*
 	if ((x+8)%25==0){
         UPOffscreenCanvas->SetPixel(x, 16, 128,128,128); 
         UPOffscreenCanvas->SetPixel(x, 17, 128,128,128); 
@@ -244,7 +245,7 @@ void PrintFreq()
         UPOffscreenCanvas->SetPixel(x, 16, ((PanelBinsL[CurrentPanelBin][0]*(1/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0,0); 
         UPOffscreenCanvas->SetPixel(x, 17, 0,((PanelBinsR[CurrentPanelBin][0]*(1/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0); 
 	}
-
+*/
       }
 	UPOffscreenCanvas = UPCanvas->SwapOnVSync(UPOffscreenCanvas);
 //	PrintFreq();
