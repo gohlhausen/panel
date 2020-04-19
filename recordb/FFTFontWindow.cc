@@ -174,10 +174,8 @@ public:
 
 void PrintFreq()
 {
-	if ((maxmL >= MINSCALAR*0.1) or (maxmR >= MINSCALAR*0.1)){
     sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
     DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line,0);
-	}
 }
   void Run() {
     int currow;
@@ -207,14 +205,14 @@ void PrintFreq()
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
-	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+3],PanelBinsR[currow][maxbins+3],((x+8)%25==0)?(BRIGHTNESS):(0));
+	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2],((x+8)%25==0)?(BRIGHTNESS):(0));
           UPOffscreenCanvas->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
         }
       }
 
       PrintFreq();
       for (x = 0; x < width; ++x) {
-	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+3],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+3])*starty);
+	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*starty);
 	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
 	for(y=0;y<starty;y++){
 	  if ((starty-y)<=cheight){
