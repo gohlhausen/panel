@@ -33,7 +33,7 @@ using namespace rgb_matrix;
 #define buffers 16
 #define buffer_frames 1024
 #define HzperBin 2.928987789
-
+#define MINSCALAR 0.050
 
 Font font;
 Font *outline_font = NULL;
@@ -52,8 +52,8 @@ double maxmL;
 double maxmR;
 int maxmLbin;
 int maxmRbin;
-double PanelBinsL[64][maxbins+3];
-double PanelBinsR[64][maxbins+3];
+double PanelBinsL[64][maxbins+4];
+double PanelBinsR[64][maxbins+4];
 int CurrentPanelBin;
 fftw_plan Lplan = fftw_plan_dft_1d(N, xL, yL, FFTW_FORWARD, FFTW_ESTIMATE);
 fftw_plan Rplan = fftw_plan_dft_1d(N, xR, yR, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -161,36 +161,6 @@ return(retcolor);
 }
 
 
-struct Color OldPixelColor(double volL, double volR, double maxL, double maxR){
-/*
-Right=240 hue
-Left=0 Hue
-Sat=100 always
-Lum=0 to 50 or 0 to 75
-m1,m2 should be volume related
-*/
-struct Color retcolor;
-double r1=0.0,b1=0.0;
-double d1=0.0;
-double m1=0.0;
-//double m2=0.0;
-m1=max(maxL,maxR);
-//m2=max(volL,volR);
-r1=(volL/maxL);
-b1=(volR/maxR);
-d1=(r1-b1)/m1;
-if(d1>0){
-retcolor.r=(uint8_t)(r1*255.0*(1.0/m1));
-retcolor.b=(uint8_t)(b1*255.0*(1.0/m1));
-retcolor.g=(uint8_t)(r1*255.0*(1.0/m1));
-} else {
-retcolor.r=(uint8_t)(r1*255.0*(1.0/m1));
-retcolor.b=(uint8_t)(b1*255.0*(1.0/m1));
-retcolor.g=(uint8_t)(b1*255.0*(1.0/m1));
-}
-return(retcolor);
-}
-
 
 class updatePanel : public ThreadedCanvasManipulator {
 private:
@@ -204,48 +174,55 @@ public:
 
 void PrintFreq()
 {
+	if ((maxmL >= MINSCALAR*0.1) or (maxmR >= MINSCALAR*0.1)){
     sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
     DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line,0);
+	}
 }
   void Run() {
     int currow;
     int starty=18;
     int x,y;
     int cheight;
+    double LScalar=0,RScalar=0;
     struct Color pcolor;
     const int width = UPOffscreenCanvas->width();
     const int height = UPOffscreenCanvas->height();
     while (running() && !interrupt_received) {
 //	PrintFreq();
+	RScalar=RScalar*.050;
+	LScalar=LScalar*.050;
+	if (RScalar<PanelBinsR[CurrentPanelBin][maxbins+2]){
+		RScalar=RScalar+abs(RScalar-PanelBinsR[CurrentPanelBin][maxbins+2])/2.0;
+		}  
+	if (RScalar < MINSCALAR) {RScalar=MINSCALAR;}
+	if (LScalar<PanelBinsL[CurrentPanelBin][maxbins+2]){
+		LScalar=LScalar+abs(LScalar-PanelBinsL[CurrentPanelBin][maxbins+2])/2.0;
+		}  
+	if (LScalar < MINSCALAR) {LScalar=MINSCALAR;}
+	PanelBinsR[CurrentPanelBin][maxbins+3]=RScalar;
+	PanelBinsL[CurrentPanelBin][maxbins+3]=LScalar;
+
 	UPOffscreenCanvas->Fill(255,128,64);
       for (y = 0; y < height-starty; ++y) {
 	currow=(64+(CurrentPanelBin-y))%64;
         for (x = 0; x < width; ++x) {
-	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+2],PanelBinsR[currow][maxbins+2],((x+8)%25==0)?(BRIGHTNESS):(0));
+	  pcolor=PixelColor(PanelBinsL[currow][x+1],PanelBinsR[currow][x+1],PanelBinsL[currow][maxbins+3],PanelBinsR[currow][maxbins+3],((x+8)%25==0)?(BRIGHTNESS):(0));
           UPOffscreenCanvas->SetPixel(x, y+starty, pcolor.r,pcolor.b,pcolor.g); 
         }
       }
 
       PrintFreq();
       for (x = 0; x < width; ++x) {
-	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+2])*18);
+	cheight=(int)(max(PanelBinsL[CurrentPanelBin][x+1]/PanelBinsL[CurrentPanelBin][maxbins+3],PanelBinsR[CurrentPanelBin][x+1]/PanelBinsR[CurrentPanelBin][maxbins+3])*starty);
 	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
-	for(y=0;y<18;y++){
-	  if ((18-y)<=cheight){
+	for(y=0;y<starty;y++){
+	  if ((starty-y)<=cheight){
             UPOffscreenCanvas->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
 	  } else {
             UPOffscreenCanvas->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
         }
-/*
-	if ((x+8)%25==0){
-        UPOffscreenCanvas->SetPixel(x, 16, 128,128,128); 
-        UPOffscreenCanvas->SetPixel(x, 17, 128,128,128); 
-	} else {
-        UPOffscreenCanvas->SetPixel(x, 16, ((PanelBinsL[CurrentPanelBin][0]*(1/PanelBinsL[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0,0); 
-        UPOffscreenCanvas->SetPixel(x, 17, 0,((PanelBinsR[CurrentPanelBin][0]*(1/PanelBinsR[CurrentPanelBin][maxbins+2])*255.0)>x)?(128):(0),0); 
-	}
-*/
       }
 	UPOffscreenCanvas = UPCanvas->SwapOnVSync(UPOffscreenCanvas);
 //	PrintFreq();
@@ -545,7 +522,7 @@ for (int i = 1; i <= maxbins; i++) {
 	if(bins[i]>maxL){maxL=bins[i];
 }
 	}
-bins[maxbins+2]=max(maxL,0.050);
+bins[maxbins+2]=max(maxL,MINSCALAR);
 }
 
 
