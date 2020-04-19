@@ -175,6 +175,14 @@ public:
 void PrintFreq()
 {
     sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
+    DrawText(UPOffscreenCanvas, font, 0, 60,bg_color,  NULL, line,0);
+    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
+    DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
+    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
+    DrawText(UPOffscreenCanvas, font, 4, 60,bg_color,  NULL, line,0);
+    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
+    DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
+    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
     DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line,0);
 }
   void Run() {
