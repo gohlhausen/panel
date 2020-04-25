@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include <string.h>
+#include <string>
 
 #include <algorithm>
 #include <alsa/asoundlib.h>
@@ -82,6 +83,25 @@ void makeWindow(){
 	for(int i=0;i<N;i++){
 	window[i]=0.5-0.5*cos((2.0*M_PI*i)/(N-i));
 	}
+}
+
+std::string GetNote(double freq){
+std::string NoteName[12]={"A ","A#","B ","C ","C#","D ","D#","E ","F ","F#","G ","G#"};
+int NoteOctaveAdj[12]={0,0,0,1,1,1,1,1,1,1,1,1};
+std::string NoteOctave[12]={"0","1","2","3","4","5","6","7","8","9","10","11"};
+std::string retval;
+double basenote=27.5;
+double ln2=log(2);
+double noteval=(log(freq/basenote)/ln2)*12.0;
+int noteint=round(noteval);
+int notemod=noteint%12;
+int notecent=trunc((noteval-noteint)*100);
+retval=NoteName[notemod];//+std::to_string((int)trunc(noteint/12)+NoteOctaveAdj[notemod]);//+(notecent<0?"-":"+")+(abs(notecent)<10?"0":"")+std::to_string(abs(notecent));
+
+
+
+return(retval);
+
 }
 
 double hue2rgb(double p, double q, double t) {
@@ -174,7 +194,7 @@ public:
 
 void PrintFreq()
 {
-    sprintf(line,"%5d %5d",(int)(maxmLbin*HzperBin),(int)(maxmRbin*HzperBin));
+    sprintf(line,"%5d%3s%5d%3s",(int)(maxmLbin*HzperBin),GetNote(maxmLbin*HzperBin).c_str(),(int)(maxmRbin*HzperBin),GetNote(maxmRbin*HzperBin).c_str());
     DrawText(UPOffscreenCanvas, font, 0, 60,bg_color,  NULL, line,0);
     DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
     DrawText(UPOffscreenCanvas, font, 4, 60,bg_color,  NULL, line,0);
