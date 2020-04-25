@@ -98,7 +98,7 @@ if(noteval < 0){noteval=0;}
 int noteint=round(noteval);
 int notemod=noteint%12;
 int notecent=trunc((noteval-noteint)*100);
-retval=NoteName[notemod];//+std::to_string((int)trunc(noteint/12)+NoteOctaveAdj[notemod]);//+(notecent<0?"-":"+")+(abs(notecent)<10?"0":"")+std::to_string(abs(notecent));
+retval=NoteName[notemod]+std::to_string((int)trunc(noteint/12)+NoteOctaveAdj[notemod])+(notecent<0?"-":"+")+(abs(notecent)<10?"0":"")+std::to_string(abs(notecent));
 }
 catch(...){}
 
@@ -196,7 +196,7 @@ public:
 
 void PrintFreq()
 {
-    sprintf(line,"%5d%3s%5d%3s",(int)(maxmLbin*HzperBin),GetNote(maxmLbin*HzperBin).c_str(),(int)(maxmRbin*HzperBin),GetNote(maxmRbin*HzperBin).c_str());
+    sprintf(line,"%5d%6s%5d%6s",(int)(maxmLbin*HzperBin),GetNote(maxmLbin*HzperBin).c_str(),(int)(maxmRbin*HzperBin),GetNote(maxmRbin*HzperBin).c_str());
     DrawText(UPOffscreenCanvas, font, 0, 60,bg_color,  NULL, line,0);
     DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
     DrawText(UPOffscreenCanvas, font, 4, 60,bg_color,  NULL, line,0);
