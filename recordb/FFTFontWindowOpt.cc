@@ -1,4 +1,4 @@
-// S16_LE is short datatype
+/// S16_LE is short datatype
 /// 3.011292346 hZ per bin (bin spacing) 1.0281 percent fast
 /// 2.928987789 hZ per bin (bin spacing) corrected
 
@@ -89,16 +89,18 @@ std::string GetNote(double freq){
 std::string NoteName[12]={"A ","A#","B ","C ","C#","D ","D#","E ","F ","F#","G ","G#"};
 int NoteOctaveAdj[12]={0,0,0,1,1,1,1,1,1,1,1,1};
 std::string NoteOctave[12]={"0","1","2","3","4","5","6","7","8","9","10","11"};
-std::string retval;
+std::string retval="ER";
+try{
 double basenote=27.5;
 double ln2=log(2);
 double noteval=(log(freq/basenote)/ln2)*12.0;
+if(noteval < 0){noteval=0;}
 int noteint=round(noteval);
 int notemod=noteint%12;
 int notecent=trunc((noteval-noteint)*100);
 retval=NoteName[notemod];//+std::to_string((int)trunc(noteint/12)+NoteOctaveAdj[notemod]);//+(notecent<0?"-":"+")+(abs(notecent)<10?"0":"")+std::to_string(abs(notecent));
-
-
+}
+catch(...){}
 
 return(retval);
 
