@@ -74,8 +74,8 @@ int bin,i;
 		PanelBinsL[i][bin]=(double)bin/(double)maxbins;
 		PanelBinsR[i][bin]=1.0-((double)bin/(double)maxbins);
 		}
-       	    PanelBinsL[i][maxbins+2]=1.0;
-	    PanelBinsR[i][maxbins+2]=1.0;
+       	    PanelBinsL[i][maxbins+2]=0;
+	    PanelBinsR[i][maxbins+2]=0;
 	}
 }
 
@@ -229,6 +229,8 @@ void PrintFreq()
     int starty=18;
     int x,y;
     int cheight;
+    double cmax=0;
+    double cnow;
     struct Color pcolor;
     const int width = UPOffscreenCanvas->width();
     const int height = UPOffscreenCanvas->height();
@@ -253,6 +255,16 @@ void PrintFreq()
 	  }
         }
       }
+	cnow=max(PanelBinsL[CurrentPanelBin][maxbins+2],PanelBinsR[CurrentPanelBin][maxbins+2]);
+	if (cnow > cmax){cmax=cnow;}
+	cheight=(int)((cnow/cmax)*starty);
+	for(y=0;y<starty;y++){
+	  if ((starty-y)<=cheight){
+            UPOffscreenCanvas->SetPixel(255, y, 255,255,255); 
+	  } else {
+            UPOffscreenCanvas->SetPixel(255, y, 0,0,0); 
+	  }
+        }
 	UPOffscreenCanvas = UPCanvas->SwapOnVSync(UPOffscreenCanvas);
     }
   }
