@@ -37,9 +37,10 @@ using namespace rgb_matrix;
 #define MINSCALAR 0.050
 
 Font font;
+Font font_small;
 Font *outline_font = NULL;
 int letter_spacing=0;
-char line[50];
+char line[4][50];
 Color fg_color(255, 0, 255);
 Color bg_color(0, 0, 0);
 double window[N];
@@ -217,12 +218,14 @@ public:
 
 void PrintFreq()
 {
-    sprintf(line,"%5d%4s%5d%4s",(int)(maxmLbin*HzperBin),GetNote(maxmLbin*HzperBin).c_str(),(int)(maxmRbin*HzperBin),GetNote(maxmRbin*HzperBin).c_str());
-    DrawText(UPOffscreenCanvas, font, 0, 60,bg_color,  NULL, line,0);
-    DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
-    DrawText(UPOffscreenCanvas, font, 4, 60,bg_color,  NULL, line,0);
-    DrawText(UPOffscreenCanvas, font, 0, 64,bg_color,  NULL, line,0);
-    DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line,0);
+    sprintf(line[0],"%5d",(int)(maxmLbin*HzperBin));
+    sprintf(line[1],"%4s",GetNote(maxmLbin*HzperBin).c_str());
+    sprintf(line[2],"%5d",(int)(maxmRbin*HzperBin));
+    sprintf(line[3],"%4s",GetNote(maxmRbin*HzperBin).c_str());
+    DrawText(UPOffscreenCanvas, font_small, 102, 62,fg_color,  NULL, line[1],0);
+    DrawText(UPOffscreenCanvas, font_small, 230, 62,fg_color,  NULL, line[3],0);
+    DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line[0],0);
+    DrawText(UPOffscreenCanvas, font, 130, 62,fg_color,  NULL, line[2],0);
 }
   void Run() {
     int currow;
@@ -598,6 +601,7 @@ int doFFT(int startbuffer, char *buffer[])
 int main (int argc, char *argv[])
 {
   const char *bdf_font_file = "panelfont.bdf";
+  const char *bdf_font_file_small = "panelfontsmall.bdf";
   bool with_outline=false;
   int i=0; 
   int err;
@@ -697,6 +701,11 @@ int main (int argc, char *argv[])
   fprintf(stderr, "audio interface prepared\n");
   if (!font.LoadFont(bdf_font_file)) {
     fprintf(stderr, "Couldn't load font '%s'\n", bdf_font_file);
+    return 1;
+  }
+
+  if (!font_small.LoadFont(bdf_font_file_small)) {
+    fprintf(stderr, "Couldn't load font '%s'\n", bdf_font_file_small);
     return 1;
   }
 
