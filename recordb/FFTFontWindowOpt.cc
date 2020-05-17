@@ -222,8 +222,8 @@ void PrintFreq()
     sprintf(line[1],"%4s",GetNote(maxmLbin*HzperBin).c_str());
     sprintf(line[2],"%5d",(int)(maxmRbin*HzperBin));
     sprintf(line[3],"%4s",GetNote(maxmRbin*HzperBin).c_str());
-    DrawText(UPOffscreenCanvas, font_small, 102, 62,fg_color,  NULL, line[1],0);
-    DrawText(UPOffscreenCanvas, font_small, 230, 62,fg_color,  NULL, line[3],0);
+    DrawText(UPOffscreenCanvas, font_small, 82, 62,fg_color,  NULL, line[1],0);
+    DrawText(UPOffscreenCanvas, font_small, 210, 62,fg_color,  NULL, line[3],0);
     DrawText(UPOffscreenCanvas, font, 2, 62,fg_color,  NULL, line[0],0);
     DrawText(UPOffscreenCanvas, font, 130, 62,fg_color,  NULL, line[2],0);
 }
