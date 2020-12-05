@@ -281,11 +281,14 @@ double getMagnitude(fftw_complex y)
 double sumbins(double (&sbins)[N/2],int startb, int endb)
 {
 double retval=0;
+double maxv=-99999999;
 	for(int i=startb;i<=endb;i++){
 		retval+=sbins[i];
+		if (sbins[i]>maxv){maxv=sbins[i];}
 		}
 	retval=retval/(abs(endb-startb)+1);
-	return(retval);
+	//return(retval);
+	return(maxv);
 }
 
 void makebins(double (&bins)[maxbins+4], double (&yL)[N/2]){
