@@ -31,8 +31,8 @@ using namespace rgb_matrix;
 #define BRIGHTNESS  32
 #define N 16384
 #define maxbins 256
-#define buffers 32 
-#define buffer_frames  512
+#define buffers 16
+#define buffer_frames 1024
 #define HzperBin 2.928987789
 #define MINSCALAR 0.050
 
@@ -568,7 +568,7 @@ int doFFT(int startbuffer, char *buffer[])
 	int bufnum;
 	int cursor;
 	for (int i = 0; i < N; i++) {
-      		bufnum=(startbuffer+(i/buffer_frames)+1)%buffers;
+      		bufnum=(startbuffer+((i/buffer_frames)/4))%buffers;
       		cursor= i%buffer_frames ;
 		tempL = (short)((unsigned int)buffer[bufnum][cursor*4]| (unsigned int)buffer[bufnum][cursor*4+1]<<8);
 		tempR = (short)((unsigned int)buffer[bufnum][cursor*4+2]| (unsigned int)buffer[bufnum][cursor*4+3]<<8);
@@ -596,7 +596,7 @@ int doFFT(int startbuffer, char *buffer[])
 			}
 		}
 
-	CurrentPanelBin=(CurrentPanelBin+((startbuffer%3)==0?1:0))%64;
+	CurrentPanelBin=(CurrentPanelBin+1)%64;
 	makebins(PanelBinsL[CurrentPanelBin],mL);
 	makebins(PanelBinsR[CurrentPanelBin],mR);
     return 0;
@@ -736,18 +736,19 @@ int main (int argc, char *argv[])
     }
   }
   while( !interrupt_received) {
+	i++;
+	i=i%buffers;
     snd_pcm_avail ( capture_handle  );
-	if (snd_pcm_avail_update( capture_handle) > buffer_frames){
-		while (snd_pcm_avail_update( capture_handle) > buffer_frames){
-		i++;
-		i=i%buffers;
-    		if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
-      			fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
-      			exit (1);
-    		}
+    
+
+    if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
+      fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
+      exit (1);
+    }
+	while (snd_pcm_avail_update( capture_handle) > buffer_frames){
+    		snd_pcm_readi (capture_handle, buffer[i], buffer_frames);
 		}
-    	doFFT(i,buffer);
-	}
+    doFFT(i,buffer);
   }
 
   free(buffer[0]);

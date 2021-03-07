@@ -2,7 +2,7 @@ CFLAGS=-Wall -Ofast -g -Wextra -Wno-unused-parameter
 CXXFLAGS=$(CFLAGS)
 OBJECTS=panelexample.o panelfft.o graphFFTS16_LEMatrix.o FFTPanel.o testalsa
 #BINARIES=panelexample panelfft graphFFTS16_LEMatrix 
-BINARIES=graphFFTS16_LEMatrix FFTPanel testalsa FFTPanelThread FFTFont FFTFontWindow FFTFontWindowOpt
+BINARIES=graphFFTS16_LEMatrix FFTPanel testalsa FFTPanelThread FFTFont FFTFontWindow FFTFontWindowOpt FFTFontWindowOptFast  FFTFontWindowOptAmber FFTFontWindowOptAmber512
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -27,6 +27,9 @@ FFTPanel : FFTPanel.o
 FFTFont : FFTFont.o
 FFTFontWindow : FFTFontWindow.o
 FFTFontWindowOpt : FFTFontWindowOpt.o
+FFTFontWindowOptFast : FFTFontWindowOptFast.o
+FFTFontWindowOptAmber : FFTFontWindowOptAmber.o
+FFTFontWindowOptAmber512 : FFTFontWindowOptAmber512.o
 FFTPanelThread : FFTPanelThread.o
 testalsa : testalsa.o
 input-example : input-example.o

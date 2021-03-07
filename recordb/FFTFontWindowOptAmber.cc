@@ -31,8 +31,8 @@ using namespace rgb_matrix;
 #define BRIGHTNESS  32
 #define N 16384
 #define maxbins 256
-#define buffers 32 
-#define buffer_frames  512
+#define buffers 16
+#define buffer_frames 1024
 #define HzperBin 2.928987789
 #define MINSCALAR 0.050
 
@@ -41,7 +41,7 @@ Font font_small;
 Font *outline_font = NULL;
 int letter_spacing=0;
 char line[4][50];
-Color fg_color(255, 0, 255);
+Color fg_color(0, 0, 255);
 Color bg_color(0, 0, 0);
 double window[N];
 fftw_complex xL[N];
@@ -192,15 +192,15 @@ double difV;
 maxV=max(maxL,maxR);
 curV=max(volL,volR);
 difV=volL-volR;
-hue=120.0+(120.0*(difV*(1/maxV)));
+hue=45.0+(45.0*(difV*(1/maxV)));
 lum=minlum+(50.0*(curV*(1/maxV)));
 retcolor=HSLtoColor(hue,sat,lum);
 retcolor.r=min(retcolor.r+Brighter,255);
 retcolor.g=min(retcolor.g+Brighter,255);
 retcolor.b=min(retcolor.b+Brighter,255);
-if(volL == maxL){retcolor.b=255;};
+if(volL == maxL){retcolor.b=0;};
 if(volR == maxR){retcolor.r=255;};
-if((volR == maxR) && (volL == maxL)){retcolor.g=255;};
+if((volR == maxR) && (volL == maxL)){retcolor.g=192;};
 return(retcolor);
 }
 
@@ -252,7 +252,7 @@ void PrintFreq()
 	bool vmax=(PanelBinsR[CurrentPanelBin][x+1]==PanelBinsR[CurrentPanelBin][maxbins+2])&&(PanelBinsL[CurrentPanelBin][x+1]==PanelBinsL[CurrentPanelBin][maxbins+2]);
 	for(y=0;y<starty;y++){
 	  if ((starty-y)<=cheight){
-            UPOffscreenCanvas->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),255); 
+            UPOffscreenCanvas->SetPixel(x, y, ((x+8)%25==0)?(BRIGHTNESS):(vmax?255:255),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:0),((x+8)%25==0)?(BRIGHTNESS):(vmax?255:192)); 
 	  } else {
             UPOffscreenCanvas->SetPixel(x, y,((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0),((x+8)%25==0)?(BRIGHTNESS):(0)); 
 	  }
@@ -263,7 +263,7 @@ void PrintFreq()
 	cheight=(int)((cnow/cmax)*starty);
 	for(y=0;y<starty;y++){
 	  if ((starty-y)<=cheight){
-            UPOffscreenCanvas->SetPixel(255, y, 255,255,255); 
+            UPOffscreenCanvas->SetPixel(255, y, 255,0,192); 
 	  } else {
             UPOffscreenCanvas->SetPixel(255, y, 0,0,0); 
 	  }
@@ -596,7 +596,7 @@ int doFFT(int startbuffer, char *buffer[])
 			}
 		}
 
-	CurrentPanelBin=(CurrentPanelBin+((startbuffer%3)==0?1:0))%64;
+	CurrentPanelBin=(CurrentPanelBin+1)%64;
 	makebins(PanelBinsL[CurrentPanelBin],mL);
 	makebins(PanelBinsR[CurrentPanelBin],mR);
     return 0;
@@ -738,13 +738,17 @@ int main (int argc, char *argv[])
   while( !interrupt_received) {
     snd_pcm_avail ( capture_handle  );
 	if (snd_pcm_avail_update( capture_handle) > buffer_frames){
-		while (snd_pcm_avail_update( capture_handle) > buffer_frames){
-		i++;
-		i=i%buffers;
     		if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
       			fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
       			exit (1);
-    		}
+   	 	}
+		while (snd_pcm_avail_update( capture_handle) > buffer_frames){
+			i++;
+			i=i%buffers;
+    			if ((err = snd_pcm_readi (capture_handle, buffer[i], buffer_frames)) != buffer_frames) {
+      				fprintf (stderr, "read from audio interface failed (%s)\n", snd_strerror (err));
+      				exit (1);
+   	 		}
 		}
     	doFFT(i,buffer);
 	}
