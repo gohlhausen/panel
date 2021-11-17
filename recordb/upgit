@@ -1,3 +1,4 @@
+gh auth login
 git add .
 git commit -m "Stuff Changed"
 git push 
