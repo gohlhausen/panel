@@ -2,7 +2,8 @@ CFLAGS=-Wall -Ofast -g -Wextra -Wno-unused-parameter
 CXXFLAGS=$(CFLAGS)
 OBJECTS=panelexample.o panelfft.o graphFFTS16_LEMatrix.o FFTPanel.o testalsa
 #BINARIES=panelexample panelfft graphFFTS16_LEMatrix 
-BINARIES=graphFFTS16_LEMatrix FFTPanel testalsa FFTPanelThread FFTFont FFTFontWindow FFTFontWindowOpt FFTFontWindowOptFast  FFTFontWindowOptAmber FFTFontWindowOptAmber512
+BINARIES=graphFFTS16_LEMatrix FFTPanel testalsa FFTPanelThread FFTFont FFTFontWindow FFTFontWindowOpt FFTFontWindowOptDots  FFTFontWindowOptAmber FFTFontWindowOptAmber512 FFTFontWindowOptDotsLog FFTFontWindowOptDotsLogSlower Panel PanelDouble PanelDoubleWhite PanelDoubleWhiteAdjust
+
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -25,9 +26,15 @@ demo : demo-main.o $(RGB_LIBRARY)
 minimal-example : minimal-example.o
 FFTPanel : FFTPanel.o
 FFTFont : FFTFont.o
+Panel : Panel.o
+PanelDouble : PanelDouble.o
+PanelDoubleWhite : PanelDoubleWhite.o
+PanelDoubleWhiteAdjust : PanelDoubleWhiteAdjust.o
 FFTFontWindow : FFTFontWindow.o
 FFTFontWindowOpt : FFTFontWindowOpt.o
-FFTFontWindowOptFast : FFTFontWindowOptFast.o
+FFTFontWindowOptDots : FFTFontWindowOptDots.o
+FFTFontWindowOptDotsLog : FFTFontWindowOptDotsLog.o
+FFTFontWindowOptDotsLogSlower : FFTFontWindowOptDotsLogSlower.o
 FFTFontWindowOptAmber : FFTFontWindowOptAmber.o
 FFTFontWindowOptAmber512 : FFTFontWindowOptAmber512.o
 FFTPanelThread : FFTPanelThread.o
